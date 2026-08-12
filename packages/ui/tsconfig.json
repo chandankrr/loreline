@@ -1,0 +1,10 @@
+{
+  "extends": "@loreline/typescript-config/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@loreline/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

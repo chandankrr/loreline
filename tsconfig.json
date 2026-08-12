@@ -1,0 +1,3 @@
+{
+  "extends": "@loreline/typescript-config/base.json"
+}
