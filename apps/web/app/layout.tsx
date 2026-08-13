@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { IBM_Plex_Mono, Manrope, Newsreader } from "next/font/google";
 
 import { cn } from "@loreline/ui/lib/utils";
 import "@loreline/ui/globals.css";
 
-import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@loreline/ui/components/tooltip";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const fontMono = Geist_Mono({
+const sans = Manrope({ subsets: ["latin"], variable: "--font-loreline-sans" });
+const story = Newsreader({
   subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-loreline-story",
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
   variable: "--font-mono",
 });
 
@@ -24,15 +30,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={cn(
-        "antialiased",
-        fontMono.variable,
-        "font-sans",
-        inter.variable,
+        "h-full antialiased",
+        sans.variable,
+        story.variable,
+        mono.variable,
       )}
     >
-      <body>
-        <ThemeProvider defaultTheme="light">{children}</ThemeProvider>
+      <body className="min-h-full">
+        <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
   );
