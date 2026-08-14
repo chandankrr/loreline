@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Manrope, Newsreader } from "next/font/google";
 import { cn } from "@loreline/ui/lib/utils";
 import "@loreline/ui/globals.css";
 
+import { Toaster } from "@loreline/ui/components/toast";
 import { TooltipProvider } from "@loreline/ui/components/tooltip";
 
 const sans = Manrope({ subsets: ["latin"], variable: "--font-loreline-sans" });
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <TooltipProvider>{children}</TooltipProvider>
+        <Toaster />
       </body>
     </html>
   );

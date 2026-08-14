@@ -108,14 +108,15 @@
               ["@loreline/**"],
               ":BLANK_LINE:",
               [
-                "@lib/**",
-                "@components/**",
-                "@hooks/**",
-                "@utils/**",
-                "@config/**",
-                "@types/**",
-                ":ALIAS:"
+                "@/types/**",
+                "@/config/**",
+                "@/lib/**",
+                "@/utils/**",
+                "@/hooks/**",
+                "@/components/**"
               ],
+              ":BLANK_LINE:",
+              ["@/features/**"],
               ":BLANK_LINE:",
               ":PATH:"
             ]
