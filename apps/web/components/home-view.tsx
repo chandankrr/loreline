@@ -21,7 +21,7 @@ import { motion, useInView, useReducedMotion } from "motion/react";
 
 import { Button } from "@loreline/ui/components/button";
 
-import { Header } from "./header";
+import { AppHeader } from "./app-header";
 import { Logo } from "./logo";
 
 const steps = [
@@ -48,7 +48,7 @@ const steps = [
 export const HomeView = () => {
   return (
     <main className="min-h-screen overflow-hidden bg-background text-foreground">
-      <Header />
+      <AppHeader variant="marketing" />
 
       <section className="relative px-5 pt-20 pb-24 sm:px-8 sm:pt-28 sm:pb-32">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-168 bg-[radial-gradient(circle_at_50%_16%,var(--brand-soft),transparent_58%)]" />
