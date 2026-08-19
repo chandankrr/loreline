@@ -1,6 +1,7 @@
 {
   "name": "@loreline/ui",
   "version": "0.0.0",
+  "description": "Package which exports shadcn components",
   "type": "module",
   "private": true,
   "scripts": {

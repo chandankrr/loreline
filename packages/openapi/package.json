@@ -1,0 +1,37 @@
+{
+  "name": "@loreline/openapi",
+  "version": "0.0.0",
+  "description": "Generates OpenAPI documentation",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wait-on ../zod/dist/index.js && tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "build": "tsc && tsc-alias",
+    "gen": "tsx src/gen.ts",
+    "lint": "biome lint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf node_modules dist"
+  },
+  "dependencies": {
+    "@anatine/zod-openapi": "^2.2.8",
+    "@loreline/zod": "workspace:*",
+    "@ts-rest/core": "^3.52.1",
+    "@ts-rest/open-api": "^3.52.1",
+    "ts-pattern": "^5.9.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "concurrently": "^10.0.5",
+    "tsc-alias": "^1.9.2",
+    "tsx": "^4.23.12",
+    "typescript": "^5",
+    "wait-on": "^9.1.0"
+  },
+  "exports": {
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "default": "./dist/contract/index.js"
+    }
+  }
+}

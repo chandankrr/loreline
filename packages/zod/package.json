@@ -1,0 +1,29 @@
+{
+  "name": "@loreline/zod",
+  "version": "0.0.0",
+  "description": "Package which exports zod schemas and types",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "build": "tsc && tsc-alias",
+    "lint": "biome lint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf node_modules dist"
+  },
+  "dependencies": {
+    "@anatine/zod-openapi": "^2.2.8",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "tsc-alias": "^1.9.2",
+    "typescript": "^5"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

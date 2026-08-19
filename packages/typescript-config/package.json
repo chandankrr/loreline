@@ -1,6 +1,7 @@
 {
   "name": "@loreline/typescript-config",
   "version": "0.0.0",
+  "description": "Package which exports typescript config files",
   "private": true,
   "exports": {
     "./base.json": "./base.json",
