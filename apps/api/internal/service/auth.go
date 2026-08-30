@@ -54,7 +54,7 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) Register(ctx echo.Context, payload *dto.CreateUserPayload) (*user.User, error) {
+func (s *AuthService) Register(ctx echo.Context, payload *dto.RegisterPayload) (*user.User, error) {
 	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 

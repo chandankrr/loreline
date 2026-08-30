@@ -30,7 +30,7 @@ func NewAuthHandler(s *server.Server, authService *service.AuthService) *AuthHan
 func (h *AuthHandler) Register(c echo.Context) error {
 	return Handle(
 		h.Handler,
-		func(c echo.Context, payload *dto.CreateUserPayload) (*user.User, error) {
+		func(c echo.Context, payload *dto.RegisterPayload) (*user.User, error) {
 			user, err := h.authService.Register(c, payload)
 			if err != nil {
 				if errors.Is(err, service.ErrEmailInUse) {
@@ -43,7 +43,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 			return user, nil
 		},
 		http.StatusCreated,
-		&dto.CreateUserPayload{},
+		&dto.RegisterPayload{},
 	)(c)
 }
 
