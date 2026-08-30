@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/chandankrr/loreline/internal/errs"
+	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/sqlerr"
 	"github.com/labstack/echo/v4"
@@ -53,7 +54,7 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			}
 
 			// Get enhanced logger from context
-			logger := GetLogger(c)
+			logger := logger.GetLogger(c)
 
 			var e *zerolog.Event
 
@@ -153,7 +154,7 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(err error, c echo.Context) {
 
 	// Log the original error to help with debugging
 	// Use enhanced logger from context which already includes request_id, method, path, ip, user context, and trace context
-	logger := *GetLogger(c)
+	logger := *logger.GetLogger(c)
 
 	logger.Error().Stack().
 		Err(originalErr).

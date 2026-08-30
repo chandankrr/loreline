@@ -8,11 +8,14 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/config"
+	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/pkgerrors"
 )
+
+const LoggerKey = "logger"
 
 // LoggerService manages New Relic integration and logger creation
 type LoggerService struct {
@@ -210,4 +213,14 @@ func GetPgxTraceLogLevel(level zerolog.Level) int {
 	default:
 		return 0 // tracelog.LogLevelNone
 	}
+}
+
+// GetLogger retrieves request logger from context
+func GetLogger(c echo.Context) *zerolog.Logger {
+	if l, ok := c.Get(LoggerKey).(*zerolog.Logger); ok {
+		return l
+	}
+	// Fallback to a basic logger if not found
+	logger := zerolog.Nop()
+	return &logger
 }

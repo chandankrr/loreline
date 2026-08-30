@@ -3,7 +3,7 @@ package handler
 import (
 	"time"
 
-	"github.com/chandankrr/loreline/internal/middleware"
+	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/validation"
 	"github.com/labstack/echo/v4"
@@ -117,7 +117,7 @@ func handleRequest[Req validation.Validatable](
 	}
 
 	// Get context-enhanced logger
-	loggerBuilder := middleware.GetLogger(c).With().
+	loggerBuilder := logger.GetLogger(c).With().
 		Str("operation", responseHandler.GetOperation()).
 		Str("method", method).
 		Str("path", path).

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/dto"
-	"github.com/chandankrr/loreline/internal/middleware"
+	applogger "github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/model/user"
 	"github.com/chandankrr/loreline/internal/repository"
 	"github.com/chandankrr/loreline/internal/server"
@@ -55,7 +55,7 @@ func NewAuthService(
 }
 
 func (s *AuthService) Register(ctx echo.Context, payload *dto.CreateUserPayload) (*user.User, error) {
-	logger := middleware.GetLogger(ctx)
+	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	_, err := s.userRepo.GetUserByEmail(reqCtx, payload.Email)
@@ -100,7 +100,7 @@ func (s *AuthService) Register(ctx echo.Context, payload *dto.CreateUserPayload)
 	}
 
 	// Business event log
-	eventLogger := middleware.GetLogger(ctx)
+	eventLogger := applogger.GetLogger(ctx)
 	eventLogger.Info().
 		Str("event", "user_register").
 		Str("user_id", user.ID.String()).
@@ -114,7 +114,7 @@ func (s *AuthService) Login(
 	payload *dto.LoginPayload,
 	ipAddress, userAgent string,
 ) (string, string, error) {
-	logger := middleware.GetLogger(ctx)
+	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	user, err := s.userRepo.GetUserByEmail(reqCtx, payload.Email)
@@ -150,7 +150,7 @@ func (s *AuthService) Login(
 	}
 
 	// Business event log
-	eventLogger := middleware.GetLogger(ctx)
+	eventLogger := applogger.GetLogger(ctx)
 	eventLogger.Info().
 		Str("event", "user_login").
 		Str("user_id", user.ID.String()).
@@ -160,7 +160,7 @@ func (s *AuthService) Login(
 }
 
 func (s *AuthService) Logout(ctx echo.Context, sessionToken string) error {
-	logger := middleware.GetLogger(ctx)
+	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	err := s.sessionRepo.RevokeSession(reqCtx, sessionToken)
@@ -170,19 +170,10 @@ func (s *AuthService) Logout(ctx echo.Context, sessionToken string) error {
 	}
 
 	// Business event log
-	eventLogger := middleware.GetLogger(ctx)
-	userID, ok := reqCtx.Value("user_id").(string)
-
-	if !ok {
-		eventLogger.Info().
-			Str("event", "user_logout").
-			Msg("user logged out")
-	} else {
-		eventLogger.Info().
-			Str("event", "user_logout").
-			Str("user_id", userID).
-			Msg("user logged out")
-	}
+	eventLogger := applogger.GetLogger(ctx)
+	eventLogger.Info().
+		Str("event", "user_logout").
+		Msg("user logged out")
 
 	return nil
 }
@@ -192,7 +183,7 @@ func (s *AuthService) RefreshAccessToken(
 	sessionToken string,
 	ipAddress, userAgent string,
 ) (string, string, error) {
-	logger := middleware.GetLogger(ctx)
+	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	session, err := s.sessionRepo.GetSession(reqCtx, sessionToken)
@@ -259,7 +250,7 @@ func (s *AuthService) RefreshAccessToken(
 	}
 
 	// Business event log
-	eventLogger := middleware.GetLogger(ctx)
+	eventLogger := applogger.GetLogger(ctx)
 	eventLogger.Info().
 		Str("event", "user_refresh_access_token").
 		Str("user_id", user.ID.String()).
@@ -285,6 +276,35 @@ func (s *AuthService) generateAccessToken(user *user.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.server.Config.Auth.JWTSecret))
+}
+
+func (s *AuthService) ValidateToken(tokenString string) (*AccessTokenClaims, error) {
+	claims := &AccessTokenClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(_ *jwt.Token) (any, error) {
+			return []byte(s.server.Config.Auth.JWTSecret), nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
+		jwt.WithIssuer(accessTokenIssuer),
+		jwt.WithAudience(accessTokenAudience),
+	)
+
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrExpiredToken
+		}
+		return nil, ErrInvalidToken
+	}
+
+	if !token.Valid {
+		return nil, ErrInvalidToken
+	}
+
+	return claims, nil
 }
 
 func hashPassword(password string) (string, error) {

@@ -28,6 +28,11 @@ tasks:
     cmds:
       - go run github.com/air-verse/air@v1.67.3 -c .air.toml
 
+  build:
+    desc: build the cmd/loreline application
+    cmds:
+      - go build -o ./bin/loreline ./cmd/loreline
+
   migrations:new:
     desc: create a new database migration
     vars:

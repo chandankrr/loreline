@@ -7,13 +7,12 @@ import (
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"github.com/rs/zerolog"
 )
 
 const (
 	UserIDKey   = "user_id"
 	UserRoleKey = "user_role"
-	LoggerKey   = "logger"
+	LoggerKey   = logger.LoggerKey
 )
 
 type ContextEnhancer struct {
@@ -85,13 +84,4 @@ func GetUserID(c echo.Context) string {
 		return userID
 	}
 	return ""
-}
-
-func GetLogger(c echo.Context) *zerolog.Logger {
-	if logger, ok := c.Get(LoggerKey).(*zerolog.Logger); ok {
-		return logger
-	}
-	// Fallback to a basic logger if not found
-	logger := zerolog.Nop()
-	return &logger
 }
