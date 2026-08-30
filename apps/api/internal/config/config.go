@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"
@@ -55,7 +56,9 @@ type IntegrationConfig struct {
 }
 
 type AuthConfig struct {
-	SecretKey string `koanf:"secret_key" validate:"required"`
+	JWTSecret       string        `koanf:"jwt_secret" validate:"required"`
+	AccessTokenTTL  time.Duration `koanf:"access_token_ttl" validate:"required"`
+	RefreshTokenTTL time.Duration `koanf:"refresh_token_ttl" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {
