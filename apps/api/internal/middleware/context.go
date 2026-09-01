@@ -64,7 +64,7 @@ func (ce *ContextEnhancer) EnhanceContext() echo.MiddlewareFunc {
 }
 
 func (ce *ContextEnhancer) extractUserID(c echo.Context) string {
-	// Check if user_id was already set by auth middleware (Clerk)
+	// Check if user_id was already set by auth middleware
 	if userID, ok := c.Get("user_id").(string); ok && userID != "" {
 		return userID
 	}
@@ -72,7 +72,7 @@ func (ce *ContextEnhancer) extractUserID(c echo.Context) string {
 }
 
 func (ce *ContextEnhancer) extractUserRole(c echo.Context) string {
-	// Check if user_role was set by auth middleware (Clerk)
+	// Check if user_role was set by auth middleware
 	if userRole, ok := c.Get("user_role").(string); ok && userRole != "" {
 		return userRole
 	}

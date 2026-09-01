@@ -1,0 +1,20 @@
+{
+  "$schema": "https://assets.requestly.com/local/v1.15.0/environment.json",
+  "id": "f5a1f9d8-5591-4168-897a-2b6ab7bdd5b6",
+  "variables": {
+    "API_URL": {
+      "id": "ecfcb959-9723-4444-bd9f-f164e52cb13b",
+      "syncValue": "",
+      "type": "string",
+      "isEnabled": true,
+      "rank": "hmtirdt0d"
+    },
+    "ACCESS_TOKEN": {
+      "id": "4aecb1a9-caed-4870-85d8-bb987eda6e2c",
+      "syncValue": "",
+      "type": "string",
+      "isEnabled": true,
+      "rank": "hmtirfm8b"
+    }
+  }
+}

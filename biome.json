@@ -17,6 +17,7 @@
       "!**/.next",
       "!**/apps/**/*/.next",
       "!**/apps/web/public/r",
+      "!**/apps/api",
       "!**/packages/ui/src/components",
       "!**/packages/ui/src/lib",
       "!**/packages/ui/src/hooks"
