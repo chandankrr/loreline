@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chandankrr/loreline/internal/database"
 	"github.com/chandankrr/loreline/internal/model/user"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -18,9 +19,9 @@ func NewUserRepository(server *server.Server) *UserRepository {
 	return &UserRepository{server: server}
 }
 
-func (r *UserRepository) CreateUserTx(
+func (r *UserRepository) CreateUser(
 	ctx context.Context,
-	tx pgx.Tx,
+	db database.DBTX,
 	name, email string,
 ) (*user.User, error) {
 	stmt := `
@@ -38,7 +39,7 @@ func (r *UserRepository) CreateUserTx(
 		*
 	`
 
-	rows, err := tx.Query(ctx, stmt, pgx.NamedArgs{
+	rows, err := db.Query(ctx, stmt, pgx.NamedArgs{
 		"name":  name,
 		"email": email,
 	})

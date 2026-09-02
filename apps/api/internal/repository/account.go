@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chandankrr/loreline/internal/database"
 	"github.com/chandankrr/loreline/internal/model/account"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -18,9 +19,9 @@ func NewAccountRepository(server *server.Server) *AccountRepository {
 	return &AccountRepository{server: server}
 }
 
-func (r *AccountRepository) CreateCredentialAccountTx(
+func (r *AccountRepository) CreateCredentialAccount(
 	ctx context.Context,
-	tx pgx.Tx,
+	db database.DBTX,
 	userID uuid.UUID,
 	passwordHash string,
 ) (*account.Account, error) {
@@ -43,7 +44,7 @@ func (r *AccountRepository) CreateCredentialAccountTx(
 		*
 	`
 
-	rows, err := tx.Query(ctx, stmt, pgx.NamedArgs{
+	rows, err := db.Query(ctx, stmt, pgx.NamedArgs{
 		"account_id":  userID.String(),
 		"provider_id": account.ProviderCredential,
 		"user_id":     userID,

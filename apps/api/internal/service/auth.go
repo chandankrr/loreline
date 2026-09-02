@@ -82,13 +82,13 @@ func (s *AuthService) Register(ctx echo.Context, payload *dto.RegisterPayload) (
 	}
 	defer tx.Rollback(reqCtx)
 
-	user, err := s.userRepo.CreateUserTx(reqCtx, tx, payload.Name, payload.Email)
+	user, err := s.userRepo.CreateUser(reqCtx, tx, payload.Name, payload.Email)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create user")
 		return nil, err
 	}
 
-	_, err = s.accountRepo.CreateCredentialAccountTx(reqCtx, tx, user.ID, hashPassword)
+	_, err = s.accountRepo.CreateCredentialAccount(reqCtx, tx, user.ID, hashPassword)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create credential account")
 		return nil, err
@@ -143,7 +143,7 @@ func (s *AuthService) Login(
 
 	refreshTokenTTL := s.server.Config.Auth.RefreshTokenTTL
 
-	session, err := s.sessionRepo.CreateSession(reqCtx, user.ID, refreshTokenTTL, &ipAddress, &userAgent)
+	session, err := s.sessionRepo.CreateSession(reqCtx, s.server.DB.Pool, user.ID, refreshTokenTTL, &ipAddress, &userAgent)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create session")
 		return "", "", err
@@ -163,7 +163,7 @@ func (s *AuthService) Logout(ctx echo.Context, sessionToken string) error {
 	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
-	err := s.sessionRepo.RevokeSession(reqCtx, sessionToken)
+	err := s.sessionRepo.RevokeSession(reqCtx, s.server.DB.Pool, sessionToken)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to revoke session")
 		return err
@@ -196,7 +196,7 @@ func (s *AuthService) RefreshAccessToken(
 	if time.Now().UTC().After(session.ExpiresAt) {
 		logger.Warn().Time("expired_at", session.ExpiresAt).Msg("session token has expired")
 
-		if err := s.sessionRepo.RevokeSession(reqCtx, sessionToken); err != nil {
+		if err := s.sessionRepo.RevokeSession(reqCtx, s.server.DB.Pool, sessionToken); err != nil {
 			logger.Error().Err(err).Msg("failed to revoke expired session")
 		}
 		return "", "", ErrExpiredToken
@@ -223,7 +223,7 @@ func (s *AuthService) RefreshAccessToken(
 	defer tx.Rollback(reqCtx)
 
 	// Revoke the old session (token rotation)
-	if err := s.sessionRepo.RevokeSessionTx(reqCtx, tx, sessionToken); err != nil {
+	if err := s.sessionRepo.RevokeSession(reqCtx, tx, sessionToken); err != nil {
 		logger.Error().Err(err).Msg("failed to revoke old session during token rotation")
 		return "", "", err
 	}
@@ -231,7 +231,7 @@ func (s *AuthService) RefreshAccessToken(
 	// Issue a new session token
 	refreshTokenTTL := s.server.Config.Auth.RefreshTokenTTL
 
-	newSession, err := s.sessionRepo.CreateSessionTx(
+	newSession, err := s.sessionRepo.CreateSession(
 		reqCtx,
 		tx,
 		user.ID,
