@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/markbates/goth"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -82,7 +83,7 @@ func (s *AuthService) Register(ctx echo.Context, payload *dto.RegisterPayload) (
 	}
 	defer tx.Rollback(reqCtx)
 
-	user, err := s.userRepo.CreateUser(reqCtx, tx, payload.Name, payload.Email)
+	user, err := s.userRepo.CreateUser(reqCtx, tx, payload.Name, payload.Email, nil, false)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create user")
 		return nil, err
@@ -155,6 +156,184 @@ func (s *AuthService) Login(
 		Str("event", "user_login").
 		Str("user_id", user.ID.String()).
 		Msg("user logged in successfully")
+
+	return accessToken, session.Token, nil
+}
+
+func (s *AuthService) OAuthLogin(
+	ctx echo.Context,
+	gothUser goth.User,
+	ipAddress, userAgent string,
+) (string, string, error) {
+	logger := applogger.GetLogger(ctx)
+	reqCtx := ctx.Request().Context()
+
+	if gothUser.Email == "" {
+		logger.Warn().
+			Str("provider", gothUser.Provider).
+			Msg("oauth provider returned no email")
+		return "", "", errors.New("email not available from oauth provider; ensure it's public or granted")
+	}
+
+	var user *user.User
+	isNewUser := false
+
+	// Check if OAuth account already exists
+	account, err := s.accountRepo.GetByProviderAndAccountID(reqCtx, gothUser.Provider, gothUser.UserID)
+	if err == nil {
+		// Existing oauth user
+		user, err = s.userRepo.GetUserByID(reqCtx, account.UserID)
+		if err != nil {
+			logger.Error().Err(err).Str("provider", gothUser.Provider).Msg("failed to get user for existing oauth account")
+			return "", "", err
+		}
+
+		// Optionally update tokens
+		var expiresAt *time.Time
+		if !gothUser.ExpiresAt.IsZero() {
+			expiresAt = &gothUser.ExpiresAt
+		}
+		if _, err := s.accountRepo.UpdateOAuthTokens(
+			reqCtx,
+			account.ID,
+			&gothUser.AccessToken,
+			&gothUser.RefreshToken,
+			&gothUser.IDToken,
+			expiresAt,
+		); err != nil {
+			logger.Warn().
+				Err(err).
+				Str("provider", gothUser.Provider).
+				Msg("failed to update oauth tokens")
+		}
+	} else if errors.Is(err, pgx.ErrNoRows) {
+		// Account doesn't exist. Check if user exists by email (Account linking)
+		user, err = s.userRepo.GetUserByEmail(reqCtx, gothUser.Email)
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User doesn't exist either. Create new user + oauth account
+			isNewUser = true
+
+			name := gothUser.NickName
+			if name == "" {
+				name = gothUser.Name
+			}
+
+			var expiresAt *time.Time
+			if !gothUser.ExpiresAt.IsZero() {
+				expiresAt = &gothUser.ExpiresAt
+			}
+
+			tx, err := s.server.DB.Pool.Begin(reqCtx)
+			if err != nil {
+				logger.Error().Err(err).Msg("failed to begin oauth signup transaction")
+				return "", "", err
+			}
+			defer tx.Rollback(reqCtx)
+
+			user, err = s.userRepo.CreateUser(
+				reqCtx,
+				tx,
+				name,
+				gothUser.Email,
+				&gothUser.AvatarURL,
+				isEmailVerifiedByProvider(gothUser))
+			if err != nil {
+				logger.Error().
+					Err(err).
+					Str("provider", gothUser.Provider).
+					Msg("failed to create user during oauth signup")
+				return "", "", err
+			}
+
+			if _, err = s.accountRepo.CreateOAuthAccount(
+				reqCtx,
+				tx,
+				user.ID,
+				gothUser.Provider,
+				gothUser.UserID,
+				&gothUser.AccessToken,
+				&gothUser.RefreshToken,
+				&gothUser.IDToken,
+				expiresAt,
+				nil,
+			); err != nil {
+				logger.Error().
+					Err(err).
+					Str("provider", gothUser.Provider).
+					Msg("failed to create oauth account during signup")
+				return "", "", err
+			}
+
+			if err := tx.Commit(reqCtx); err != nil {
+				logger.Error().Err(err).Msg("failed to commit oauth signup transaction")
+				return "", "", err
+			}
+		} else if err != nil {
+			logger.Error().Err(err).Msg("failed to get user by email during oauth account linking")
+			return "", "", err
+		} else {
+			// Existing user found by email — link this provider to it
+			var expiresAt *time.Time
+			if !gothUser.ExpiresAt.IsZero() {
+				expiresAt = &gothUser.ExpiresAt
+			}
+
+			if _, err := s.accountRepo.CreateOAuthAccount(
+				reqCtx,
+				s.server.DB.Pool,
+				user.ID,
+				gothUser.Provider,
+				gothUser.UserID,
+				&gothUser.AccessToken,
+				&gothUser.RefreshToken,
+				&gothUser.IDToken,
+				expiresAt,
+				nil,
+			); err != nil {
+				logger.Error().
+					Err(err).
+					Str("provider", gothUser.Provider).
+					Msg("failed to link oauth account to existing user")
+				return "", "", err
+			}
+		}
+	} else {
+		logger.Error().
+			Err(err).
+			Str("provider", gothUser.Provider).
+			Msg("failed to look up oauth account")
+		return "", "", err
+	}
+
+	accessToken, err := s.generateAccessToken(user)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to generate access token")
+		return "", "", err
+	}
+
+	refreshTokenTTL := s.server.Config.Auth.RefreshTokenTTL
+
+	session, err := s.sessionRepo.CreateSession(
+		reqCtx,
+		s.server.DB.Pool,
+		user.ID,
+		refreshTokenTTL,
+		&ipAddress,
+		&userAgent,
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to create session")
+		return "", "", err
+	}
+
+	// Business event log
+	eventLogger := applogger.GetLogger(ctx)
+	eventLogger.Info().
+		Str("event", "user_oauth_login").
+		Str("user_id", user.ID.String()).
+		Str("provider", gothUser.Provider).
+		Bool("new_user", isNewUser).
+		Msg("user logged in via oauth successfully")
 
 	return accessToken, session.Token, nil
 }
@@ -318,4 +497,17 @@ func hashPassword(password string) (string, error) {
 
 func verifyPassword(hashedPassword, providedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(providedPassword))
+}
+
+func isEmailVerifiedByProvider(gothUser goth.User) bool {
+	switch gothUser.Provider {
+	case "google":
+		if v, ok := gothUser.RawData["verified_email"].(bool); ok {
+			return v
+		}
+		return false
+
+	default:
+		return false
+	}
 }

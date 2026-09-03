@@ -9,6 +9,7 @@ type Handlers struct {
 	Health  *HealthHandler
 	OpenAPI *OpenAPIHandler
 	Auth    *AuthHandler
+	OAuth   *OAuthHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -16,5 +17,6 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Health:  NewHealthHandler(s),
 		OpenAPI: NewOpenAPIHandler(s),
 		Auth:    NewAuthHandler(s, services.Auth),
+		OAuth:   NewOAuthHandler(s, services.Auth),
 	}
 }

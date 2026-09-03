@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/chandankrr/loreline/internal/dto"
 	"github.com/chandankrr/loreline/internal/errs"
@@ -12,8 +11,6 @@ import (
 	"github.com/chandankrr/loreline/internal/service"
 	"github.com/labstack/echo/v4"
 )
-
-const refreshTokenCookieName = "refresh_token"
 
 type AuthHandler struct {
 	Handler
@@ -137,29 +134,4 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 		http.StatusOK,
 		&dto.EmptyPayload{},
 	)(c)
-}
-
-func (h *AuthHandler) setRefreshTokenCookie(c echo.Context, token string) {
-	c.SetCookie(&http.Cookie{
-		Name:     refreshTokenCookieName,
-		Value:    token,
-		Path:     "/api/v1/auth",
-		Expires:  time.Now().Add(h.server.Config.Auth.RefreshTokenTTL),
-		HttpOnly: true,
-		Secure:   h.server.Config.Primary.Env == "production",
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
-func (h *AuthHandler) clearRefreshTokenCookie(c echo.Context) {
-	c.SetCookie(&http.Cookie{
-		Name:     refreshTokenCookieName,
-		Value:    "",
-		Path:     "/api/v1/auth",
-		Expires:  time.Unix(0, 0),
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   h.server.Config.Primary.Env == "production",
-		SameSite: http.SameSiteStrictMode,
-	})
 }

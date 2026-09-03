@@ -23,25 +23,33 @@ func (r *UserRepository) CreateUser(
 	ctx context.Context,
 	db database.DBTX,
 	name, email string,
+	image *string,
+	emailVerified bool,
 ) (*user.User, error) {
 	stmt := `
 		INSERT INTO
 			users (
 				name,
-				email
+				email,
+				image,
+				email_verified
 			)
 		VALUES
 			(
 				@name,
-				@email
+				@email,
+				@image,
+				@email_verified
 			)
 		RETURNING
 		*
 	`
 
 	rows, err := db.Query(ctx, stmt, pgx.NamedArgs{
-		"name":  name,
-		"email": email,
+		"name":           name,
+		"email":          email,
+		"image":          image,
+		"email_verified": emailVerified,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute create user query for name=%s email=%s: %w", name, email, err)

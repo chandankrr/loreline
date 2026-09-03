@@ -6,11 +6,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func registerAuthRoutes(r *echo.Group, h *handler.AuthHandler, m *middleware.AuthMiddleware) {
+func registerAuthRoutes(
+	r *echo.Group,
+	h *handler.AuthHandler,
+	oauthHandler *handler.OAuthHandler,
+	m *middleware.AuthMiddleware,
+) {
 	auth := r.Group("/auth")
 
 	auth.POST("/register", h.Register)
 	auth.POST("/login", h.Login)
 	auth.POST("/logout", h.Logout, m.RequiredAuth)
 	auth.POST("/refresh", h.RefreshToken)
+
+	auth.GET("/:provider", oauthHandler.BeginAuth)
+	auth.GET("/:provider/callback", oauthHandler.Callback)
 }

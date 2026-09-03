@@ -97,12 +97,12 @@ func (r *SessionRepository) GetSession(ctx context.Context, token string) (*sess
 		"token": tokenHash,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get session by token query for token=%s: %w", token, err)
+		return nil, fmt.Errorf("failed to execute get session by token query for token=%s: %w", tokenHash, err)
 	}
 
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:session for token=%s: %w", token, err)
+		return nil, fmt.Errorf("failed to collect row from table:session for token=%s: %w", tokenHash, err)
 	}
 
 	// Return original token instead of hash token
