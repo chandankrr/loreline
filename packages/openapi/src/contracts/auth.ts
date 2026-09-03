@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   ZLoginPayload,
   ZLoginResponse,
+  ZOAuthProvider,
   ZRefreshResponse,
   ZRegisterPayload,
   ZUser,
@@ -59,13 +60,42 @@ export const authenticationContract = c.router(
     },
 
     refresh: {
-      summary: "Refresh",
+      summary: "Refresh Tokens",
       path: "/refresh",
       method: "POST",
-      description: "Refreshes the user's authentication tokens",
+      description:
+        "Refreshes the user's authentication tokens using a refresh token stored in an HTTP-only cookie + token rotation",
       body: z.void(),
       responses: {
         200: ZRefreshResponse,
+      },
+    },
+
+    oauthBegin: {
+      summary: "Begin OAuth",
+      path: "/:provider",
+      method: "GET",
+      description:
+        "Starts the OAuth authentication flow for the specified provider",
+      pathParams: z.object({
+        provider: ZOAuthProvider,
+      }),
+      responses: {
+        307: z.void(),
+      },
+    },
+
+    oauthCallback: {
+      summary: "OAuth Callback",
+      path: "/:provider/callback",
+      method: "GET",
+      description:
+        "Completes the OAuth authentication flow for the specified provider and redirects to the frontend",
+      pathParams: z.object({
+        provider: ZOAuthProvider,
+      }),
+      responses: {
+        307: z.void(),
       },
     },
   },

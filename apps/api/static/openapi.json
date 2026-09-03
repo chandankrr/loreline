@@ -5,7 +5,9 @@
       "get": {
         "description": "Get health status",
         "summary": "Get health",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "parameters": [],
         "operationId": "getHealth",
         "responses": {
@@ -18,7 +20,10 @@
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": ["healthy", "unhealthy"]
+                      "enum": [
+                        "healthy",
+                        "unhealthy"
+                      ]
                     },
                     "timestamp": {
                       "type": "string",
@@ -43,7 +48,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["status", "responseTime"]
+                          "required": [
+                            "status",
+                            "responseTime"
+                          ]
                         },
                         "redis": {
                           "type": "object",
@@ -58,13 +66,23 @@
                               "type": "string"
                             }
                           },
-                          "required": ["status", "responseTime"]
+                          "required": [
+                            "status",
+                            "responseTime"
+                          ]
                         }
                       },
-                      "required": ["database"]
+                      "required": [
+                        "database"
+                      ]
                     }
                   },
-                  "required": ["status", "timestamp", "environment", "checks"]
+                  "required": [
+                    "status",
+                    "timestamp",
+                    "environment",
+                    "checks"
+                  ]
                 }
               }
             }
@@ -76,7 +94,9 @@
       "post": {
         "description": "Creates a new user account",
         "summary": "Register",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "parameters": [],
         "operationId": "register",
         "requestBody": {
@@ -97,7 +117,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["email", "name", "password"]
+                "required": [
+                  "email",
+                  "name",
+                  "password"
+                ]
               }
             }
           }
@@ -155,7 +179,9 @@
       "post": {
         "description": "Authenticates a user",
         "summary": "Login",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "parameters": [],
         "operationId": "login",
         "requestBody": {
@@ -173,7 +199,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -190,7 +219,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["accessToken"]
+                  "required": [
+                    "accessToken"
+                  ]
                 }
               }
             }
@@ -202,7 +233,9 @@
       "post": {
         "description": "Logs out the authenticated user",
         "summary": "Logout",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "parameters": [],
         "operationId": "logout",
         "requestBody": {
@@ -232,9 +265,11 @@
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "description": "Refreshes the user's authentication tokens",
-        "summary": "Refresh",
-        "tags": ["Authentication"],
+        "description": "Refreshes the user's authentication tokens using a refresh token stored in an HTTP-only cookie + token rotation",
+        "summary": "Refresh Tokens",
+        "tags": [
+          "Authentication"
+        ],
         "parameters": [],
         "operationId": "refresh",
         "requestBody": {
@@ -257,8 +292,76 @@
                       "type": "string"
                     }
                   },
-                  "required": ["accessToken"]
+                  "required": [
+                    "accessToken"
+                  ]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/{provider}": {
+      "get": {
+        "description": "Starts the OAuth authentication flow for the specified provider",
+        "summary": "Begin OAuth",
+        "tags": [
+          "Authentication"
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google"
+              ]
+            }
+          }
+        ],
+        "operationId": "oauthBegin",
+        "responses": {
+          "307": {
+            "description": "307",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/{provider}/callback": {
+      "get": {
+        "description": "Completes the OAuth authentication flow for the specified provider and redirects to the frontend",
+        "summary": "OAuth Callback",
+        "tags": [
+          "Authentication"
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google"
+              ]
+            }
+          }
+        ],
+        "operationId": "oauthCallback",
+        "responses": {
+          "307": {
+            "description": "307",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const ZOAuthProvider = z.enum(["google"]);
+
 export const ZRegisterPayload = z.object({
   email: z.string().email(),
   name: z.string(),

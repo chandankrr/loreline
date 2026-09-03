@@ -232,8 +232,8 @@
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "description": "Refreshes the user's authentication tokens",
-        "summary": "Refresh",
+        "description": "Refreshes the user's authentication tokens using a refresh token stored in an HTTP-only cookie + token rotation",
+        "summary": "Refresh Tokens",
         "tags": ["Authentication"],
         "parameters": [],
         "operationId": "refresh",
@@ -259,6 +259,64 @@
                   },
                   "required": ["accessToken"]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/{provider}": {
+      "get": {
+        "description": "Starts the OAuth authentication flow for the specified provider",
+        "summary": "Begin OAuth",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["google"]
+            }
+          }
+        ],
+        "operationId": "oauthBegin",
+        "responses": {
+          "307": {
+            "description": "307",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/{provider}/callback": {
+      "get": {
+        "description": "Completes the OAuth authentication flow for the specified provider and redirects to the frontend",
+        "summary": "OAuth Callback",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["google"]
+            }
+          }
+        ],
+        "operationId": "oauthCallback",
+        "responses": {
+          "307": {
+            "description": "307",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }

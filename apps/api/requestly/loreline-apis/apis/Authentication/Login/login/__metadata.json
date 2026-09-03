@@ -3,7 +3,7 @@
   "type": "api",
   "entryType": "http",
   "id": "57fda2cc-199f-4ef4-b621-316ccd1a43d2",
-  "rank": "as",
+  "rank": "a0",
   "url": "{{API_URL}}/auth/login",
   "method": "POST",
   "contentType": "none"
