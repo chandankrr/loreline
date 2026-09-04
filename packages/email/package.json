@@ -1,0 +1,22 @@
+{
+  "name": "@loreline/email",
+  "version": "0.0.0",
+  "description": "Package to manage emails",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "email dev --dir ./src/templates -p 3001",
+    "export": "email export --pretty --dir ./src/templates --outDir ../../apps/api/templates/emails"
+  },
+  "dependencies": {
+    "react-email": "6.1.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@react-email/ui": "6.1.4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4"
+  }
+}
