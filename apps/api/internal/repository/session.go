@@ -2,14 +2,11 @@ package repository
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
+	"github.com/chandankrr/loreline/internal/lib/utils/token"
 	"github.com/chandankrr/loreline/internal/model/session"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -52,12 +49,12 @@ func (r *SessionRepository) CreateSession(
 		*
 	`
 
-	token, err := generateSecureToken()
+	rawToken, err := token.Generate()
 	if err != nil {
 		return nil, err
 	}
 
-	tokenHash := hashToken(token)
+	tokenHash := token.Hash(rawToken)
 
 	rows, err := db.Query(ctx, stmt, pgx.NamedArgs{
 		"user_id":    userID,
@@ -67,21 +64,31 @@ func (r *SessionRepository) CreateSession(
 		"user_agent": userAgent,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute create session query for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute create session query for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:sessions for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:sessions for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	// Return original token instead of hash token
-	sessionItem.Token = token
+	sessionItem.Token = rawToken
 
 	return &sessionItem, nil
 }
 
-func (r *SessionRepository) GetSession(ctx context.Context, token string) (*session.Session, error) {
+func (r *SessionRepository) GetSession(ctx context.Context, sessionToken string) (*session.Session, error) {
 	stmt := `
 		SELECT
 			*
@@ -91,27 +98,37 @@ func (r *SessionRepository) GetSession(ctx context.Context, token string) (*sess
 			AND revoked = false
 	`
 
-	tokenHash := hashToken(token)
+	tokenHash := token.Hash(sessionToken)
 
 	rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
 		"token": tokenHash,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get session by token query for token=%s: %w", tokenHash, err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute get session by token query for token=%s: %w",
+				tokenHash,
+				err,
+			)
 	}
 
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:session for token=%s: %w", tokenHash, err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:session for token=%s: %w",
+				tokenHash,
+				err,
+			)
 	}
 
 	// Return original token instead of hash token
-	sessionItem.Token = token
+	sessionItem.Token = sessionToken
 
 	return &sessionItem, nil
 }
 
-func (r *SessionRepository) RevokeSession(ctx context.Context, db database.DBTX, token string) error {
+func (r *SessionRepository) RevokeSession(ctx context.Context, db database.DBTX, sessionToken string) error {
 	stmt := `
 		UPDATE sessions
 		SET
@@ -121,7 +138,7 @@ func (r *SessionRepository) RevokeSession(ctx context.Context, db database.DBTX,
 			AND revoked = false
 	`
 
-	tokenHash := hashToken(token)
+	tokenHash := token.Hash(sessionToken)
 
 	_, err := db.Exec(ctx, stmt, pgx.NamedArgs{
 		"token": tokenHash,
@@ -151,21 +168,4 @@ func (r *SessionRepository) RevokeAllUserSessions(ctx context.Context, userID uu
 	}
 
 	return nil
-}
-
-// generateSecureToken generates a cryptographically secure session/refresh token
-func generateSecureToken() (string, error) {
-	b := make([]byte, 32)
-
-	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
-	}
-
-	return base64.URLEncoding.EncodeToString(b), nil
-}
-
-// hashToken hashes a token before database storage/lookup
-func hashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:])
 }

@@ -58,11 +58,17 @@ func (h *AuthHandler) Login(c echo.Context) error {
 				userAgent,
 			)
 			if err != nil {
-				if errors.Is(err, service.ErrInvalidCredentials) {
+				switch {
+				case errors.Is(err, service.ErrEmailNotVerified):
+					code := "EMAIL_NOT_VERIFIED"
 					return nil,
-						errs.NewUnauthorizedError("Invalid email or password", false)
+						errs.NewUnauthorizedError("Email not verified", false, &code)
+				case errors.Is(err, service.ErrInvalidCredentials):
+					return nil,
+						errs.NewUnauthorizedError("Invalid email or password", false, nil)
+				default:
+					return nil, err
 				}
-				return nil, err
 			}
 
 			h.setRefreshTokenCookie(c, refreshToken)
@@ -100,7 +106,7 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 			cookie, err := c.Cookie(refreshTokenCookieName)
 			if err != nil || cookie.Value == "" {
 				return nil,
-					errs.NewUnauthorizedError("Missing refresh token", false)
+					errs.NewUnauthorizedError("Missing refresh token", false, nil)
 			}
 
 			ipAddress := c.RealIP()
@@ -116,11 +122,11 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 				switch {
 				case errors.Is(err, service.ErrInvalidToken):
 					return nil,
-						errs.NewUnauthorizedError("Invalid token", false)
+						errs.NewUnauthorizedError("Invalid token", false, nil)
 
 				case errors.Is(err, service.ErrExpiredToken):
 					return nil,
-						errs.NewUnauthorizedError("Token has expired", false)
+						errs.NewUnauthorizedError("Token has expired", false, nil)
 
 				default:
 					return nil, err
@@ -133,5 +139,111 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 		},
 		http.StatusOK,
 		&dto.EmptyPayload{},
+	)(c)
+}
+
+func (h *AuthHandler) VerifyEmail(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *dto.VerifyEmailPayload) (*dto.MessageResponse, error) {
+			err := h.authService.VerifyEmail(c, payload.Email, payload.Code)
+			if err != nil {
+				switch {
+				case errors.Is(err, service.ErrInvalidVerificationCode):
+					return nil,
+						errs.NewBadRequestError("Invalid verification code", false, nil, nil, nil)
+				case errors.Is(err, service.ErrVerificationExpired):
+					return nil,
+						errs.NewBadRequestError("Verification code has expired", false, nil, nil, nil)
+				case errors.Is(err, service.ErrEmailAlreadyVerified):
+					return nil,
+						errs.NewBadRequestError("Email already verified", false, nil, nil, nil)
+				case errors.Is(err, service.ErrVerificationAttemptsExceeded):
+					return nil,
+						errs.NewTooManyRequestsError("Too many verification attempts. Please request a new code", false)
+				default:
+					return nil, err
+				}
+			}
+
+			return &dto.MessageResponse{Message: "Email verified successfully"}, nil
+		},
+		http.StatusOK,
+		&dto.VerifyEmailPayload{},
+	)(c)
+}
+
+func (h *AuthHandler) ResendVerificationEmail(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *dto.ResendVerificationPayload) (*dto.MessageResponse, error) {
+			err := h.authService.ResendVerificationEmail(c, payload.Email)
+			if err != nil {
+				switch {
+				case errors.Is(err, service.ErrEmailAlreadyVerified):
+					return nil,
+						errs.NewBadRequestError("Email already verified", false, nil, nil, nil)
+				case errors.Is(err, service.ErrTooManyRequests):
+					return nil,
+						errs.NewTooManyRequestsError("Please wait before requesting another code", false)
+				default:
+					return nil, err
+				}
+			}
+
+			return &dto.MessageResponse{
+				Message: "If your email is registered and unverified, a verification code has been sent",
+			}, nil
+		},
+		http.StatusOK,
+		&dto.ResendVerificationPayload{},
+	)(c)
+}
+
+func (h *AuthHandler) ForgotPassword(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *dto.ForgotPasswordPayload) (*dto.MessageResponse, error) {
+			err := h.authService.ForgotPassword(c, payload.Email)
+			if err != nil {
+				switch {
+				case errors.Is(err, service.ErrTooManyRequests):
+					return nil,
+						errs.NewTooManyRequestsError("Please wait before requesting another password reset", false)
+				default:
+					return nil, err
+				}
+			}
+
+			return &dto.MessageResponse{
+				Message: "If your email is registered, a password reset link has been sent",
+			}, nil
+		},
+		http.StatusOK,
+		&dto.ForgotPasswordPayload{},
+	)(c)
+}
+
+func (h *AuthHandler) ResetPassword(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *dto.ResetPasswordPayload) (*dto.MessageResponse, error) {
+			err := h.authService.ResetPassword(c, payload.Token, payload.Password)
+			if err != nil {
+				switch {
+				case errors.Is(err, service.ErrInvalidResetToken):
+					return nil,
+						errs.NewBadRequestError("Invalid or expired reset token", false, nil, nil, nil)
+				default:
+					return nil, err
+				}
+			}
+
+			return &dto.MessageResponse{
+				Message: "Password reset successfully",
+			}, nil
+		},
+		http.StatusOK,
+		&dto.ResetPasswordPayload{},
 	)(c)
 }

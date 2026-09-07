@@ -17,13 +17,13 @@ import lorelineTailwindConfig from "../theme.js";
 type PasswordResetEmailProps = {
   baseUrl: string;
   resetUrl: string;
-  expiresInMinutes?: number;
+  expiresInMinutes: string;
 };
 
 export default function PasswordResetEmail({
-  baseUrl,
-  resetUrl,
-  expiresInMinutes = 30,
+  baseUrl = "{{.BaseURL}}",
+  resetUrl = "{{.ResetURL}}",
+  expiresInMinutes = "{{.ExpiresInMinutes}}",
 }: PasswordResetEmailProps) {
   const brand = "Loreline";
 
@@ -97,5 +97,5 @@ export default function PasswordResetEmail({
 PasswordResetEmail.PreviewProps = {
   baseUrl: "https://example.com",
   resetUrl: "https://example.com/reset?token=abc123",
-  expiresInMinutes: 30,
+  expiresInMinutes: "30",
 } satisfies PasswordResetEmailProps;

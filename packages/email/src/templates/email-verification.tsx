@@ -16,13 +16,13 @@ import lorelineTailwindConfig from "../theme.js";
 type EmailVerificationEmailProps = {
   baseUrl: string;
   verificationCode: string;
-  expiresInMinutes?: number;
+  expiresInMinutes: string;
 };
 
 export default function EmailVerificationEmail({
-  baseUrl,
-  verificationCode,
-  expiresInMinutes = 15,
+  baseUrl = "{{.BaseURL}}",
+  verificationCode = "{{.VerificationCode}}",
+  expiresInMinutes = "{{.ExpiresInMinutes}}",
 }: EmailVerificationEmailProps) {
   const brand = "Loreline";
 
@@ -106,5 +106,5 @@ export default function EmailVerificationEmail({
 EmailVerificationEmail.PreviewProps = {
   baseUrl: "https://example.com",
   verificationCode: "482913",
-  expiresInMinutes: 15,
+  expiresInMinutes: "15",
 } satisfies EmailVerificationEmailProps;

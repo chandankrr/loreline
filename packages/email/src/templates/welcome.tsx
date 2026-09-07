@@ -43,8 +43,8 @@ const steps = [
 ];
 
 export default function WelcomeEmail({
-  userFirstName,
-  baseUrl,
+  userFirstName = "{{.UserFirstName}}",
+  baseUrl = "{{.BaseURL}}",
 }: WelcomeEmailProps) {
   const brand = "Loreline";
   const welcomeTitle = `Welcome to ${brand}`;

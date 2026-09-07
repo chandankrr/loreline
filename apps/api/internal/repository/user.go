@@ -52,12 +52,24 @@ func (r *UserRepository) CreateUser(
 		"email_verified": emailVerified,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute create user query for name=%s email=%s: %w", name, email, err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute create user query for name=%s email=%s: %w",
+				name,
+				email,
+				err,
+			)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:users for name=%s email=%s: %w", name, email, err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:users for name=%s email=%s: %w",
+				name,
+				email,
+				err,
+			)
 	}
 
 	return &userItem, nil
@@ -76,12 +88,14 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 		"email": email,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get user by email query for email=%s: %w", email, err)
+		return nil,
+			fmt.Errorf("failed to execute get user by email query for email=%s: %w", email, err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:users for email=%s: %w", email, err)
+		return nil,
+			fmt.Errorf("failed to collect row from table:users for email=%s: %w", email, err)
 	}
 
 	return &userItem, nil
@@ -100,13 +114,40 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 		"id": id,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get user by id query for id=%s: %w", id.String(), err)
+		return nil,
+			fmt.Errorf("failed to execute get user by id query for id=%s: %w", id.String(), err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:users for id=%s: %w", id.String(), err)
+		return nil,
+			fmt.Errorf("failed to collect row from table:users for id=%s: %w", id.String(), err)
 	}
 
 	return &userItem, nil
+}
+
+func (r *UserRepository) UpdateEmailVerified(
+	ctx context.Context,
+	db database.DBTX,
+	userID uuid.UUID,
+	verified bool,
+) error {
+	stmt := `
+		UPDATE users
+		SET
+			email_verified = @email_verified
+		WHERE
+			id = @id
+	`
+
+	_, err := db.Exec(ctx, stmt, pgx.NamedArgs{
+		"id":             userID,
+		"email_verified": verified,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update email_verified for user_id=%s: %w", userID.String(), err)
+	}
+
+	return nil
 }

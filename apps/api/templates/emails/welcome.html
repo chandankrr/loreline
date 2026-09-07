@@ -71,6 +71,7 @@
                                     <p
                                       style="font-size:40px;line-height:1.08;letter-spacing:-0.6px;font-family:Newsreader,Georgia,Times New Roman,serif;color:rgb(19,21,12);font-style:italic;margin-top:16px;margin-bottom:16px">
                                       Welcome to Loreline<!-- -->,
+                                      <!-- -->{{.UserFirstName}}
                                     </p>
                                     <p
                                       style="font-size:16px;line-height:1.6;margin:0px;margin-top:0.75rem;max-width:26.25rem;letter-spacing:-0.1px;font-family:Manrope,Helvetica Neue,Arial,sans-serif;color:rgb(75,78,59);margin-bottom:0px;margin-left:0px;margin-right:0px">
@@ -91,6 +92,7 @@
                                         <tr>
                                           <td>
                                             <a
+                                              href="{{.BaseURL}}"
                                               style="line-height:1.6;text-decoration:none;display:inline-block;max-width:100%;mso-padding-alt:0px;border-radius:999px;background-color:rgb(223,224,68);padding-right:24px;padding-left:24px;padding-bottom:10px;padding-top:10px;text-align:center;font-size:16px;letter-spacing:-0.1px;font-family:Manrope,Helvetica Neue,Arial,sans-serif;font-weight:600;color:rgb(47,67,0)"
                                               target="_blank"
                                               ><span
@@ -355,7 +357,7 @@
                                     <p
                                       style="font-size:12px;line-height:1.6;margin:0px;margin-top:1rem;max-width:320px;letter-spacing:0px;font-family:Manrope,Helvetica Neue,Arial,sans-serif;color:rgb(124,128,107);margin-bottom:0px;margin-left:0px;margin-right:0px">
                                       <a
-                                        href="undefined/unsubscribe"
+                                        href="{{.BaseURL}}/unsubscribe"
                                         style="color:rgb(124,128,107);text-decoration-line:underline"
                                         target="_blank"
                                         >Unsubscribe</a

@@ -34,7 +34,7 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 
 	req := withProviderParam(c)
 
-	frontendURL := h.server.Config.OAuth.FrontendURL
+	frontendURL := h.server.Config.Primary.FrontendURL
 
 	gothUser, err := gothic.CompleteUserAuth(c.Response(), req)
 	if err != nil {

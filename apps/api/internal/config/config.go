@@ -24,7 +24,8 @@ type Config struct {
 }
 
 type Primary struct {
-	Env string `koanf:"env" validate:"required"`
+	Env         string `koanf:"env" validate:"required"`
+	FrontendURL string `koanf:"frontend_url" validate:"required,url"`
 }
 
 type ServerConfig struct {
@@ -57,15 +58,15 @@ type IntegrationConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret       string        `koanf:"jwt_secret" validate:"required"`
-	AccessTokenTTL  time.Duration `koanf:"access_token_ttl" validate:"required"`
-	RefreshTokenTTL time.Duration `koanf:"refresh_token_ttl" validate:"required"`
+	JWTSecret              string        `koanf:"jwt_secret" validate:"required"`
+	AccessTokenTTL         time.Duration `koanf:"access_token_ttl" validate:"required"`
+	RefreshTokenTTL        time.Duration `koanf:"refresh_token_ttl" validate:"required"`
+	VerificationCodeSecret string        `koanf:"verification_code_secret" validate:"required"`
 }
 
 type OAuthConfig struct {
 	SessionSecret string              `koanf:"session_secret" validate:"required"`
 	CallbackURL   string              `koanf:"callback_url" validate:"required,url"`
-	FrontendURL   string              `koanf:"frontend_url" validate:"required,url"`
 	Google        OAuthProviderConfig `koanf:"google" validate:"required"`
 }
 

@@ -4,9 +4,15 @@ import (
 	"net/http"
 )
 
-func NewUnauthorizedError(message string, override bool) *HTTPError {
+func NewUnauthorizedError(message string, override bool, code *string) *HTTPError {
+	formattedCode := MakeUpperCaseWithUnderscores(http.StatusText(http.StatusUnauthorized))
+
+	if code != nil {
+		formattedCode = *code
+	}
+
 	return &HTTPError{
-		Code:     MakeUpperCaseWithUnderscores(http.StatusText(http.StatusUnauthorized)),
+		Code:     formattedCode,
 		Message:  message,
 		Status:   http.StatusUnauthorized,
 		Override: override,
@@ -75,6 +81,15 @@ func NewInternalServerError() *HTTPError {
 		Message:  http.StatusText(http.StatusInternalServerError),
 		Status:   http.StatusInternalServerError,
 		Override: false,
+	}
+}
+
+func NewTooManyRequestsError(message string, override bool) *HTTPError {
+	return &HTTPError{
+		Code:     MakeUpperCaseWithUnderscores(http.StatusText(http.StatusTooManyRequests)),
+		Message:  message,
+		Status:   http.StatusTooManyRequests,
+		Override: override,
 	}
 }
 

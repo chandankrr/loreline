@@ -7,13 +7,13 @@ import (
 )
 
 type Services struct {
-	Auth *AuthService
 	Job  *job.JobService
+	Auth *AuthService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
 	return &Services{
 		Job:  s.Job,
-		Auth: NewAuthService(s, repos.User, repos.Session, repos.Account),
+		Auth: NewAuthService(s, repos.User, repos.Session, repos.Account, repos.Verification),
 	}, nil
 }

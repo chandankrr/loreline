@@ -57,17 +57,24 @@ CREATE TRIGGER set_updated_at_accounts
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
+CREATE TYPE verification_type AS ENUM (
+    'email_verification',
+    'password_reset'
+);
 
 CREATE TABLE verification (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     identifier TEXT NOT NULL, -- email address or user ID
+    type verification_type NOT NULL,
     value TEXT NOT NULL, -- token or code
     expires_at TIMESTAMPTZ NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_verification_identifier ON verification(identifier);
+CREATE INDEX idx_verification_identifier_type ON verification(identifier, type);
 
 CREATE TRIGGER set_updated_at_verification
     BEFORE UPDATE ON verification

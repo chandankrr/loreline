@@ -34,7 +34,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("missing authorization header")
-			return errs.NewUnauthorizedError("Unauthorized", false)
+			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
 		// Expected format: Authorization: Bearer <access_token>
@@ -46,7 +46,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("invalid authorization header format")
-			return errs.NewUnauthorizedError("Unauthorized", false)
+			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
 		accessToken := parts[1]
@@ -57,7 +57,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("empty access token")
-			return errs.NewUnauthorizedError("Unauthorized", false)
+			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
 		claims, err := auth.authService.ValidateToken(accessToken)
@@ -68,7 +68,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("invalid or expired access token")
-			return errs.NewUnauthorizedError("Unauthorized", false)
+			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
 		// Extract user ID from JWT claims
@@ -79,8 +79,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("user id missing from token claims")
-
-			return errs.NewUnauthorizedError("Unauthorized", false)
+			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
 		c.Set("user_id", userID)

@@ -52,12 +52,22 @@ func (r *AccountRepository) CreateCredentialAccount(
 		"password":    passwordHash,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute create account query for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute create account query for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:accounts for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:accounts for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	return &accountItem, nil
@@ -80,15 +90,51 @@ func (r *AccountRepository) GetCredentialAccount(
 		"user_id": userID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get credential account query for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute get credential account query for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:accounts for user_id=%s: %w", userID.String(), err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:accounts for user_id=%s: %w",
+				userID.String(),
+				err,
+			)
 	}
 
 	return &accountItem, nil
+}
+
+func (r *AccountRepository) UpdatePassword(
+	ctx context.Context,
+	db database.DBTX,
+	userID uuid.UUID,
+	passwordHash string,
+) error {
+	stmt := `
+		UPDATE accounts
+		SET
+			password = @password
+		WHERE
+			user_id = @user_id
+			AND provider_id = 'credential'
+	`
+
+	_, err := db.Exec(ctx, stmt, pgx.NamedArgs{
+		"user_id":  userID,
+		"password": passwordHash,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update password for user_id=%s: %w", userID.String(), err)
+	}
+
+	return nil
 }
 
 func (r *AccountRepository) CreateOAuthAccount(
@@ -138,12 +184,25 @@ func (r *AccountRepository) CreateOAuthAccount(
 		"scope":                   scope,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute create account query for user_id=%s account_id=%s provider_id=%s: %w", userID.String(), accountID, providerID, err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute create account query for user_id=%s account_id=%s provider_id=%s: %w",
+				userID.String(),
+				accountID,
+				providerID,
+				err,
+			)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:accounts for user_id=%s account_id=%s provider_id=%s: %w", userID, accountID, providerID, err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:accounts for user_id=%s account_id=%s provider_id=%s: %w", userID,
+				accountID,
+				providerID,
+				err,
+			)
 	}
 
 	return &accountItem, nil
@@ -167,12 +226,24 @@ func (r *AccountRepository) GetByProviderAndAccountID(
 		"account_id":  AccountID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute get account by provider_id and account_id query for provider_id=%s account_id=%s: %w", providerID, AccountID, err)
+		return nil,
+			fmt.Errorf(
+				"failed to execute get account by provider_id and account_id query for provider_id=%s account_id=%s: %w",
+				providerID,
+				AccountID,
+				err,
+			)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:accounts for provider_id=%s account_id=%s: %w", providerID, AccountID, err)
+		return nil,
+			fmt.Errorf(
+				"failed to collect row from table:accounts for provider_id=%s account_id=%s: %w",
+				providerID,
+				AccountID,
+				err,
+			)
 	}
 
 	return &accountItem, nil
@@ -180,6 +251,7 @@ func (r *AccountRepository) GetByProviderAndAccountID(
 
 func (r *AccountRepository) UpdateOAuthTokens(
 	ctx context.Context,
+	db database.DBTX,
 	id uuid.UUID,
 	accessToken, refreshToken, idToken *string,
 	accessTokenExpiresAt *time.Time,
@@ -197,7 +269,7 @@ func (r *AccountRepository) UpdateOAuthTokens(
 		*
 	`
 
-	rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
+	rows, err := db.Query(ctx, stmt, pgx.NamedArgs{
 		"access_token":            accessToken,
 		"refresh_token":           refreshToken,
 		"id_token":                idToken,
