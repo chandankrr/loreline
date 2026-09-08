@@ -81,9 +81,17 @@ export const SignInForm = () => {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="form-sign-in-password">
-                  Password
-                </FieldLabel>
+                <div className="flex items-center justify-between">
+                  <FieldLabel htmlFor="form-sign-in-password">
+                    Password
+                  </FieldLabel>
+                  <Link
+                    href="/forgot-password"
+                    className="text-muted-foreground text-xs underline-offset-1 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input
                   {...field}
                   id="form-sign-in-password"
