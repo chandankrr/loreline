@@ -233,10 +233,10 @@
     "/api/v1/auth/refresh": {
       "post": {
         "description": "Refreshes the user's authentication tokens using a refresh token stored in an HTTP-only cookie + token rotation",
-        "summary": "Refresh Tokens",
+        "summary": "Refresh Token",
         "tags": ["Authentication"],
         "parameters": [],
-        "operationId": "refresh",
+        "operationId": "refreshToken",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -258,6 +258,187 @@
                     }
                   },
                   "required": ["accessToken"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/verify": {
+      "post": {
+        "description": "Verifies the user's email address using the verification code",
+        "summary": "Email Verification",
+        "tags": ["Authentication"],
+        "parameters": [],
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string"
+                  }
+                },
+                "required": ["email", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/resend": {
+      "post": {
+        "description": "Resends a new email verification code to the user's registered email address",
+        "summary": "Resend Email Verification",
+        "tags": ["Authentication"],
+        "parameters": [],
+        "operationId": "resendEmailVerification",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "description": "Initiates password reset process by sending a reset password email to the user's registered email address",
+        "summary": "Forgot Password",
+        "tags": ["Authentication"],
+        "parameters": [],
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "description": "Resets the user's password",
+        "summary": "Reset Password",
+        "tags": ["Authentication"],
+        "parameters": [],
+        "operationId": "resetPassword",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["token", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
                 }
               }
             }

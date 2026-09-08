@@ -2,12 +2,17 @@ import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
 import {
+  ZForgotPasswordPayload,
   ZLoginPayload,
   ZLoginResponse,
+  ZMessageResponse,
   ZOAuthProvider,
   ZRefreshResponse,
   ZRegisterPayload,
+  ZResendVerificationCodePayload,
+  ZResetPasswordPayload,
   ZUser,
+  ZVerifyEmailPayload,
 } from "@loreline/zod";
 
 import { getSecurityMetadata } from "../utils.js";
@@ -59,8 +64,8 @@ export const authenticationContract = c.router(
       metadata: metadata,
     },
 
-    refresh: {
-      summary: "Refresh Tokens",
+    refreshToken: {
+      summary: "Refresh Token",
       path: "/refresh",
       method: "POST",
       description:
@@ -68,6 +73,53 @@ export const authenticationContract = c.router(
       body: z.void(),
       responses: {
         200: ZRefreshResponse,
+      },
+    },
+
+    verifyEmail: {
+      summary: "Email Verification",
+      path: "/email/verify",
+      method: "POST",
+      description:
+        "Verifies the user's email address using the verification code",
+      body: ZVerifyEmailPayload,
+      responses: {
+        200: ZMessageResponse,
+      },
+    },
+
+    resendEmailVerification: {
+      summary: "Resend Email Verification",
+      path: "/email/resend",
+      method: "POST",
+      description:
+        "Resends a new email verification code to the user's registered email address",
+      body: ZResendVerificationCodePayload,
+      responses: {
+        200: ZMessageResponse,
+      },
+    },
+
+    forgotPassword: {
+      summary: "Forgot Password",
+      path: "/password/forgot",
+      method: "POST",
+      description:
+        "Initiates password reset process by sending a reset password email to the user's registered email address",
+      body: ZForgotPasswordPayload,
+      responses: {
+        200: ZMessageResponse,
+      },
+    },
+
+    resetPassword: {
+      summary: "Reset Password",
+      path: "/password/reset",
+      method: "POST",
+      description: "Resets the user's password",
+      body: ZResetPasswordPayload,
+      responses: {
+        200: ZMessageResponse,
       },
     },
 
