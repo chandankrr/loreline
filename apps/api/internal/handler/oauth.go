@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
@@ -71,4 +72,16 @@ func withProviderParam(c echo.Context) *http.Request {
 	req.URL.RawQuery = q.Encode()
 
 	return req
+}
+
+func (h Handler) setRefreshTokenCookie(c echo.Context, token string) {
+	c.SetCookie(&http.Cookie{
+		Name:     refreshTokenCookieName,
+		Value:    token,
+		Path:     "/",
+		Expires:  time.Now().Add(h.server.Config.Auth.RefreshTokenTTL),
+		HttpOnly: true,
+		Secure:   h.server.Config.Primary.Env == "production",
+		SameSite: http.SameSiteStrictMode,
+	})
 }

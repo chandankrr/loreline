@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+)
 
 type RegisterPayload struct {
 	Email    string `json:"email" validate:"required,email"`
@@ -24,11 +26,15 @@ func (p *LoginPayload) Validate() error {
 }
 
 type LoginResponse struct {
-	AccessToken string `json:"accessToken"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
+	User         UserResponse `json:"user"`
 }
 
 type RefreshResponse struct {
-	AccessToken string `json:"accessToken"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
+	User         UserResponse `json:"user"`
 }
 
 type VerifyEmailPayload struct {

@@ -32,7 +32,7 @@ const (
 	accessTokenIssuer       = "loreline"
 	accessTokenAudience     = "loreline-api"
 	verificationMaxAttempts = 5
-	resendCooldown          = 60 * time.Second
+	resendCooldown          = 30 * time.Second
 )
 
 var (
@@ -144,39 +144,39 @@ func (s *AuthService) Login(
 	ctx echo.Context,
 	payload *dto.LoginPayload,
 	ipAddress, userAgent string,
-) (string, string, error) {
+) (*user.User, string, string, error) {
 	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	user, err := s.userRepo.GetUserByEmail(reqCtx, payload.Email)
 	if err != nil {
 		logger.Warn().Msg("authentication failed")
-		return "", "", ErrInvalidCredentials
+		return nil, "", "", ErrInvalidCredentials
 	}
 
 	account, err := s.accountRepo.GetCredentialAccount(reqCtx, user.ID)
 	if err != nil {
 		// User exists but has no password (might be OAuth only)
 		logger.Warn().Msg("authentication failed")
-		return "", "", ErrInvalidCredentials
+		return nil, "", "", ErrInvalidCredentials
 	}
 
 	if err := verifyPassword(*account.Password, payload.Password); err != nil {
 		logger.Warn().Msg("authentication failed")
-		return "", "", ErrInvalidCredentials
+		return nil, "", "", ErrInvalidCredentials
 	}
 
 	if !user.EmailVerified {
 		logger.Warn().
 			Str("user_id", user.ID.String()).
 			Msg("login blocked: email is not verified")
-		return "", "", ErrEmailNotVerified
+		return nil, "", "", ErrEmailNotVerified
 	}
 
 	accessToken, err := s.generateAccessToken(user)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to generate access token")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	refreshTokenTTL := s.server.Config.Auth.RefreshTokenTTL
@@ -191,7 +191,7 @@ func (s *AuthService) Login(
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create session")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Business event log
@@ -201,7 +201,7 @@ func (s *AuthService) Login(
 		Str("user_id", user.ID.String()).
 		Msg("user logged in successfully")
 
-	return accessToken, session.Token, nil
+	return user, accessToken, session.Token, nil
 }
 
 func (s *AuthService) OAuthLogin(
@@ -469,14 +469,14 @@ func (s *AuthService) RefreshAccessToken(
 	ctx echo.Context,
 	sessionToken string,
 	ipAddress, userAgent string,
-) (string, string, error) {
+) (*user.User, string, string, error) {
 	logger := applogger.GetLogger(ctx)
 	reqCtx := ctx.Request().Context()
 
 	session, err := s.sessionRepo.GetSession(reqCtx, sessionToken)
 	if err != nil {
 		logger.Warn().Err(err).Msg("failed to get session while refreshing access token")
-		return "", "", ErrInvalidToken
+		return nil, "", "", ErrInvalidToken
 	}
 
 	// Check if the session is expired
@@ -488,33 +488,33 @@ func (s *AuthService) RefreshAccessToken(
 		if err := s.sessionRepo.RevokeSession(reqCtx, s.server.DB.Pool, sessionToken); err != nil {
 			logger.Error().Err(err).Msg("failed to revoke expired session")
 		}
-		return "", "", ErrExpiredToken
+		return nil, "", "", ErrExpiredToken
 	}
 
 	user, err := s.userRepo.GetUserByID(reqCtx, session.UserID)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get user while refreshing access token")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Generate a new access token
 	accessToken, err := s.generateAccessToken(user)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to generate access token during refresh")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	tx, err := s.server.DB.Pool.Begin(reqCtx)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to begin session token rotation transaction")
-		return "", "", err
+		return nil, "", "", err
 	}
 	defer tx.Rollback(reqCtx)
 
 	// Revoke the old session (token rotation)
 	if err := s.sessionRepo.RevokeSession(reqCtx, tx, sessionToken); err != nil {
 		logger.Error().Err(err).Msg("failed to revoke old session during token rotation")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Issue a new session token
@@ -530,12 +530,12 @@ func (s *AuthService) RefreshAccessToken(
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create new session during token refresh")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	if err := tx.Commit(reqCtx); err != nil {
 		logger.Error().Err(err).Msg("failed to commit session token rotation")
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Business event log
@@ -545,7 +545,7 @@ func (s *AuthService) RefreshAccessToken(
 		Str("user_id", user.ID.String()).
 		Msg("access token refreshed successfully")
 
-	return accessToken, newSession.Token, nil
+	return user, accessToken, newSession.Token, nil
 }
 
 func (s *AuthService) VerifyEmail(ctx echo.Context, email, code string) error {

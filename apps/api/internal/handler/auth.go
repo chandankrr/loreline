@@ -6,11 +6,12 @@ import (
 
 	"github.com/chandankrr/loreline/internal/dto"
 	"github.com/chandankrr/loreline/internal/errs"
-	"github.com/chandankrr/loreline/internal/model/user"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/service"
 	"github.com/labstack/echo/v4"
 )
+
+const refreshTokenCookieName = "refreshToken"
 
 type AuthHandler struct {
 	Handler
@@ -27,8 +28,8 @@ func NewAuthHandler(s *server.Server, authService *service.AuthService) *AuthHan
 func (h *AuthHandler) Register(c echo.Context) error {
 	return Handle(
 		h.Handler,
-		func(c echo.Context, payload *dto.RegisterPayload) (*user.User, error) {
-			user, err := h.authService.Register(c, payload)
+		func(c echo.Context, payload *dto.RegisterPayload) (*dto.MessageResponse, error) {
+			_, err := h.authService.Register(c, payload)
 			if err != nil {
 				if errors.Is(err, service.ErrEmailInUse) {
 					code := "EMAIL_ALREADY_IN_USE"
@@ -37,7 +38,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 				return nil, err
 			}
 
-			return user, nil
+			return &dto.MessageResponse{Message: "User registered successfully"}, nil
 		},
 		http.StatusCreated,
 		&dto.RegisterPayload{},
@@ -51,7 +52,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 			ipAddress := c.RealIP()
 			userAgent := c.Request().UserAgent()
 
-			accessToken, refreshToken, err := h.authService.Login(
+			user, accessToken, refreshToken, err := h.authService.Login(
 				c,
 				payload,
 				ipAddress,
@@ -71,9 +72,11 @@ func (h *AuthHandler) Login(c echo.Context) error {
 				}
 			}
 
-			h.setRefreshTokenCookie(c, refreshToken)
-
-			return &dto.LoginResponse{AccessToken: accessToken}, nil
+			return &dto.LoginResponse{
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+				User:         dto.ToUserResponse(user),
+			}, nil
 		},
 		http.StatusOK,
 		&dto.LoginPayload{},
@@ -91,7 +94,6 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 				}
 			}
 
-			h.clearRefreshTokenCookie(c)
 			return nil
 		},
 		http.StatusNoContent,
@@ -112,7 +114,7 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 			ipAddress := c.RealIP()
 			userAgent := c.Request().UserAgent()
 
-			accessToken, refreshToken, err := h.authService.RefreshAccessToken(
+			user, accessToken, refreshToken, err := h.authService.RefreshAccessToken(
 				c,
 				cookie.Value,
 				ipAddress,
@@ -133,9 +135,11 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 				}
 			}
 
-			h.setRefreshTokenCookie(c, refreshToken)
-
-			return &dto.RefreshResponse{AccessToken: accessToken}, nil
+			return &dto.RefreshResponse{
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+				User:         dto.ToUserResponse(user),
+			}, nil
 		},
 		http.StatusOK,
 		&dto.EmptyPayload{},
@@ -150,11 +154,13 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrInvalidVerificationCode):
+					code := "INVALID_CODE"
 					return nil,
-						errs.NewBadRequestError("Invalid verification code", false, nil, nil, nil)
+						errs.NewBadRequestError("Invalid verification code", false, &code, nil, nil)
 				case errors.Is(err, service.ErrVerificationExpired):
+					code := "CODE_EXPIRED"
 					return nil,
-						errs.NewBadRequestError("Verification code has expired", false, nil, nil, nil)
+						errs.NewBadRequestError("Verification code has expired", false, &code, nil, nil)
 				case errors.Is(err, service.ErrEmailAlreadyVerified):
 					return nil,
 						errs.NewBadRequestError("Email already verified", false, nil, nil, nil)
