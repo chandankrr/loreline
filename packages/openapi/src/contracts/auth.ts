@@ -11,7 +11,6 @@ import {
   ZRegisterPayload,
   ZResendVerificationCodePayload,
   ZResetPasswordPayload,
-  ZUser,
   ZVerifyEmailPayload,
 } from "@loreline/zod";
 
@@ -34,7 +33,7 @@ export const authenticationContract = c.router(
         password: true,
       }),
       responses: {
-        201: ZUser,
+        201: ZMessageResponse,
       },
     },
 

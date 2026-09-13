@@ -9,3 +9,8 @@ export const ZUser = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
+
+export const ZAuthUser = ZUser.omit({
+  createdAt: true,
+  updatedAt: true,
+});

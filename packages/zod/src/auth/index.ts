@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ZAuthUser } from "../user/index.js";
+
 export const ZOAuthProvider = z.enum(["google"]);
 
 export const ZRegisterPayload = z.object({
@@ -15,10 +17,14 @@ export const ZLoginPayload = z.object({
 
 export const ZLoginResponse = z.object({
   accessToken: z.string(),
+  refreshToken: z.string(),
+  user: ZAuthUser,
 });
 
 export const ZRefreshResponse = z.object({
   accessToken: z.string(),
+  refreshToken: z.string(),
+  user: ZAuthUser,
 });
 
 export const ZVerifyEmailPayload = z.object({

@@ -110,40 +110,11 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "emailVerified": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
+                    "message": {
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "emailVerified",
-                    "image",
-                    "createdAt",
-                    "updatedAt"
-                  ]
+                  "required": ["message"]
                 }
               }
             }
@@ -188,9 +159,42 @@
                   "properties": {
                     "accessToken": {
                       "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "emailVerified": {
+                          "type": "boolean"
+                        },
+                        "image": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "name",
+                        "emailVerified",
+                        "image"
+                      ]
                     }
                   },
-                  "required": ["accessToken"]
+                  "required": ["accessToken", "refreshToken", "user"]
                 }
               }
             }
@@ -255,9 +259,42 @@
                   "properties": {
                     "accessToken": {
                       "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "emailVerified": {
+                          "type": "boolean"
+                        },
+                        "image": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "name",
+                        "emailVerified",
+                        "image"
+                      ]
                     }
                   },
-                  "required": ["accessToken"]
+                  "required": ["accessToken", "refreshToken", "user"]
                 }
               }
             }
