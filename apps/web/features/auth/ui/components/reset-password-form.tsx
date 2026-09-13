@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -10,6 +12,7 @@ import { Field, FieldError, FieldLabel } from "@loreline/ui/components/field";
 import { Input } from "@loreline/ui/components/input";
 import { toast } from "@loreline/ui/components/toast";
 
+import { useResetPassword } from "../../api";
 import { resetPasswordSchema } from "../../schemas";
 
 type ResetPasswordFormProps = {
@@ -17,6 +20,9 @@ type ResetPasswordFormProps = {
 };
 
 export const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
+  const router = useRouter();
+  const { mutate, isPending } = useResetPassword();
+
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -27,11 +33,18 @@ export const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
   });
 
   function onSubmit(data: z.infer<typeof resetPasswordSchema>) {
-    console.log(data);
-    toast.add({
-      title: "Password reset successfully",
-      type: "success",
-    });
+    mutate(
+      { body: data },
+      {
+        onSuccess: () => {
+          toast.add({
+            title: "Password reset successfully",
+            type: "success",
+          });
+          router.push("/sign-in");
+        },
+      },
+    );
   }
 
   return (
@@ -95,7 +108,13 @@ export const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
               </Field>
             )}
           />
-          <Button type="submit" size="xl" className="w-full">
+          <Button
+            type="submit"
+            size="xl"
+            className="w-full"
+            disabled={isPending}
+          >
+            {isPending ? <LoaderCircleIcon className="animate-spin" /> : null}
             Reset password
             <ArrowRightIcon data-icon="inline-end" />
           </Button>

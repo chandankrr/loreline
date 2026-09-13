@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -12,9 +12,12 @@ import { Field, FieldError, FieldLabel } from "@loreline/ui/components/field";
 import { Input } from "@loreline/ui/components/input";
 import { toast } from "@loreline/ui/components/toast";
 
+import { useForgotPassword } from "../../api";
 import { forgotPasswordSchema } from "../../schemas";
 
 export const ForgotPasswordForm = () => {
+  const { mutate, isPending } = useForgotPassword();
+
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -23,11 +26,17 @@ export const ForgotPasswordForm = () => {
   });
 
   function onSubmit(data: z.infer<typeof forgotPasswordSchema>) {
-    console.log(data);
-    toast.add({
-      title: "If your email is registered, a password reset link has been sent",
-      type: "success",
-    });
+    mutate(
+      { body: data },
+      {
+        onSuccess: () => {
+          toast.add({
+            title: "Forgot password link sent",
+            type: "success",
+          });
+        },
+      },
+    );
   }
 
   return (
@@ -68,7 +77,13 @@ export const ForgotPasswordForm = () => {
               </Field>
             )}
           />
-          <Button type="submit" size="xl" className="w-full">
+          <Button
+            type="submit"
+            size="xl"
+            className="w-full"
+            disabled={isPending}
+          >
+            {isPending ? <LoaderCircleIcon className="animate-spin" /> : null}
             Send reset link
             <ArrowRightIcon data-icon="inline-end" />
           </Button>
