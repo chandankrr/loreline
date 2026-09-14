@@ -101,7 +101,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	return &userItem, nil
 }
 
-func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User, error) {
 	stmt := `
 		SELECT
 			*
@@ -115,13 +115,13 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 	})
 	if err != nil {
 		return nil,
-			fmt.Errorf("failed to execute get user by id query for id=%s: %w", id.String(), err)
+			fmt.Errorf("failed to execute get user by id query for id=%s: %w", id, err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
 		return nil,
-			fmt.Errorf("failed to collect row from table:users for id=%s: %w", id.String(), err)
+			fmt.Errorf("failed to collect row from table:users for id=%s: %w", id, err)
 	}
 
 	return &userItem, nil

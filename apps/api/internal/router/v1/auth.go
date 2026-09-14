@@ -23,6 +23,7 @@ func registerAuthRoutes(
 	auth.POST("/email/resend", h.ResendVerificationEmail)
 	auth.POST("/password/forgot", h.ForgotPassword)
 	auth.POST("/password/reset", h.ResetPassword)
+	auth.GET("/me", h.Me, m.RequiredAuth)
 
 	// OAuth
 	auth.GET("/:provider", oauthHandler.BeginAuth)

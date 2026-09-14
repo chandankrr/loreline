@@ -59,7 +59,7 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 
 	h.setRefreshTokenCookie(c, refreshToken)
 
-	return c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/callback")
+	return c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/library")
 }
 
 // withProviderParam bridges echo's :provider path param to gothic

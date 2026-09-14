@@ -227,7 +227,7 @@ func (s *AuthService) OAuthLogin(
 	account, err := s.accountRepo.GetByProviderAndAccountID(reqCtx, gothUser.Provider, gothUser.UserID)
 	if err == nil {
 		// Existing oauth user
-		user, err = s.userRepo.GetUserByID(reqCtx, account.UserID)
+		user, err = s.userRepo.GetUserByID(reqCtx, account.UserID.String())
 		if err != nil {
 			logger.Error().
 				Err(err).
@@ -491,7 +491,7 @@ func (s *AuthService) RefreshAccessToken(
 		return "", "", ErrExpiredToken
 	}
 
-	user, err := s.userRepo.GetUserByID(reqCtx, session.UserID)
+	user, err := s.userRepo.GetUserByID(reqCtx, session.UserID.String())
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get user while refreshing access token")
 		return "", "", err
@@ -925,6 +925,25 @@ func (s *AuthService) ResetPassword(ctx echo.Context, resetToken, newPassword st
 		Msg("password reset successfully")
 
 	return nil
+}
+
+func (s *AuthService) GetCurrentUser(ctx echo.Context, userID string) (*user.User, error) {
+	logger := applogger.GetLogger(ctx)
+	reqCtx := ctx.Request().Context()
+
+	currentUser, err := s.userRepo.GetUserByID(reqCtx, userID)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to get current user")
+		return nil, err
+	}
+
+	eventLogger := applogger.GetLogger(ctx)
+	eventLogger.Info().
+		Str("event", "get_current_user").
+		Str("user_id", userID).
+		Msg("current user fetched successfully")
+
+	return currentUser, nil
 }
 
 func (s *AuthService) generateAccessToken(user *user.User) (string, error) {
