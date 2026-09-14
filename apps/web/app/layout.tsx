@@ -21,9 +21,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL),
   title: "Loreline",
   description:
     "A realtime AI reading companion that sees the page with you, answers by voice, and turns difficult ideas into vivid understanding.",
