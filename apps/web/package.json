@@ -13,16 +13,22 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.8.0",
+    "@loreline/openapi": "workspace:*",
     "@loreline/ui": "workspace:*",
+    "@loreline/zod": "workspace:*",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-query-devtools": "^5.102.8",
+    "@ts-rest/core": "^3.52.1",
+    "axios": "^1.20.0",
     "lucide-react": "^1.31.0",
     "motion": "^13.1.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.85.0",
-    "zod": "^4.4.3"
+    "ts-pattern": "^5.9.0",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
