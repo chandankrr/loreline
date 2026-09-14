@@ -1,5 +1,5 @@
 {
-  "$schema": "https://assets.requestly.com/local/v1.15.0/environment.json",
+  "$schema": "https://assets.requestly.com/local/v1.17.0/environment.json",
   "id": "f5a1f9d8-5591-4168-897a-2b6ab7bdd5b6",
   "variables": {
     "API_URL": {
@@ -7,14 +7,22 @@
       "syncValue": "http://localhost:8080/api/v1",
       "type": "string",
       "isEnabled": true,
-      "rank": "hmtirdt0d"
+      "rank": "hmtirdt0d",
+      "valueSource": {
+        "kind": "inline"
+      },
+      "overrideMeta": null
     },
     "ACCESS_TOKEN": {
       "id": "4aecb1a9-caed-4870-85d8-bb987eda6e2c",
       "syncValue": "",
       "type": "string",
       "isEnabled": true,
-      "rank": "hmtirfm8b"
+      "rank": "hmtirfm8b",
+      "valueSource": {
+        "kind": "inline"
+      },
+      "overrideMeta": null
     }
   }
 }

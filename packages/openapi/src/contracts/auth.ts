@@ -2,6 +2,7 @@ import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
 import {
+  ZAuthUser,
   ZForgotPasswordPayload,
   ZLoginPayload,
   ZLoginResponse,
@@ -11,7 +12,6 @@ import {
   ZRegisterPayload,
   ZResendVerificationCodePayload,
   ZResetPasswordPayload,
-  ZUser,
   ZVerifyEmailPayload,
 } from "@loreline/zod";
 
@@ -34,7 +34,7 @@ export const authenticationContract = c.router(
         password: true,
       }),
       responses: {
-        201: ZUser,
+        201: ZMessageResponse,
       },
     },
 
@@ -120,6 +120,16 @@ export const authenticationContract = c.router(
       body: ZResetPasswordPayload,
       responses: {
         200: ZMessageResponse,
+      },
+    },
+
+    me: {
+      summary: "Get Current User",
+      path: "/me",
+      method: "GET",
+      description: "Returns the currently authenticated user",
+      responses: {
+        200: ZAuthUser,
       },
     },
 
