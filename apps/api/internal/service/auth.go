@@ -32,7 +32,7 @@ const (
 	accessTokenIssuer       = "loreline"
 	accessTokenAudience     = "loreline-api"
 	verificationMaxAttempts = 5
-	resendCooldown          = 60 * time.Second
+	resendCooldown          = 30 * time.Second
 )
 
 var (

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -12,10 +13,20 @@ import { Field, FieldError, FieldLabel } from "@loreline/ui/components/field";
 import { Input } from "@loreline/ui/components/input";
 import { toast } from "@loreline/ui/components/toast";
 
+import { getApiErrorCode } from "@/api/utils";
+import { getSafeRedirect } from "@/lib/utils";
+
+import { useLogin } from "../../api";
 import { signInSchema } from "../../schemas";
 import { GoogleIcon } from "../icons/google";
 
 export const SignInForm = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { mutate, isPending } = useLogin();
+
+  const redirectTo = getSafeRedirect(searchParams.get("redirect"));
+
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -25,11 +36,23 @@ export const SignInForm = () => {
   });
 
   function onSubmit(data: z.infer<typeof signInSchema>) {
-    console.log(data);
-    toast.add({
-      title: "Signed in successfully",
-      type: "success",
-    });
+    mutate(
+      { body: data },
+      {
+        onSuccess: () => {
+          toast.add({ title: "Signed in successfully", type: "success" });
+          router.push(redirectTo);
+        },
+        onError: (error) => {
+          if (getApiErrorCode(error) === "EMAIL_NOT_VERIFIED") {
+            router.push(
+              `/verify-email?email=${encodeURIComponent(data.email)}`,
+            );
+            return;
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -106,7 +129,13 @@ export const SignInForm = () => {
               </Field>
             )}
           />
-          <Button type="submit" size="xl" className="w-full">
+          <Button
+            type="submit"
+            size="xl"
+            className="w-full"
+            disabled={isPending}
+          >
+            {isPending ? <LoaderCircleIcon className="animate-spin" /> : null}
             Sign in
             <ArrowRightIcon data-icon="inline-end" />
           </Button>

@@ -121,10 +121,12 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrInvalidToken):
+					h.clearRefreshTokenCookie(c)
 					return nil,
 						errs.NewUnauthorizedError("Invalid token", false, nil)
 
 				case errors.Is(err, service.ErrExpiredToken):
+					h.clearRefreshTokenCookie(c)
 					return nil,
 						errs.NewUnauthorizedError("Token has expired", false, nil)
 

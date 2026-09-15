@@ -9,13 +9,11 @@ declare module "axios" {
   }
 }
 
-const axiosConfig = {
+export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
-};
-
-export const axiosInstance = axios.create(axiosConfig);
+});
 
 axiosInstance.interceptors.request.use((config) => {
   const token = authStore.getAccessToken();
@@ -33,7 +31,11 @@ let refreshPromise: Promise<string | null> | null = null;
 const refreshAccessToken = async (): Promise<string | null> => {
   if (!refreshPromise) {
     refreshPromise = axios
-      .post<TRefreshResponse>("/api/v1/auth/refresh", {}, axiosConfig)
+      .post<TRefreshResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+        {},
+        { withCredentials: true },
+      )
       .then((res) => {
         const token = res.data.accessToken ?? null;
         if (token) {
@@ -60,10 +62,13 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig | undefined;
 
+    const isAuthRequest = originalRequest?.url?.includes("/auth");
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthRequest
     ) {
       originalRequest._retry = true;
       const newToken = await refreshAccessToken();
