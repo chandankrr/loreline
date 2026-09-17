@@ -28,8 +28,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname === "/" && hasRefreshToken) {
+    return NextResponse.redirect(new URL("/library", request.url));
+  }
+
   if (isAuthRoute && hasRefreshToken) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/library", request.url));
   }
 
   return NextResponse.next();
@@ -37,6 +41,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/library/:path*",
     "/sign-in",
     "/sign-up",

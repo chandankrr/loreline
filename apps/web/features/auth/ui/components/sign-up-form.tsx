@@ -16,6 +16,7 @@ import { toast } from "@loreline/ui/components/toast";
 import { getApiErrorCode } from "@/api/utils";
 
 import { useRegister } from "../../api";
+import { getOAuthUrl } from "../../lib/utils";
 import { signUpSchema } from "../../schemas";
 import { GoogleIcon } from "../icons/google";
 
@@ -31,6 +32,10 @@ export const SignUpForm = () => {
       password: "",
     },
   });
+
+  function handleGoogleAuth() {
+    window.location.href = getOAuthUrl("google");
+  }
 
   function onSubmit(data: z.infer<typeof signUpSchema>) {
     mutate(
@@ -66,7 +71,13 @@ export const SignUpForm = () => {
       </p>
 
       <div className="mt-9 space-y-5">
-        <Button type="button" variant="outline" size="xl" className="w-full">
+        <Button
+          type="button"
+          variant="outline"
+          size="xl"
+          className="w-full"
+          onClick={handleGoogleAuth}
+        >
           <GoogleIcon className="size-3.5 grayscale-50" /> Continue with Google
         </Button>
         <div className="flex items-center gap-3 text-muted-foreground text-xs">

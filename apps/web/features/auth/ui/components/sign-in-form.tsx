@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
@@ -17,6 +18,7 @@ import { getApiErrorCode } from "@/api/utils";
 import { getSafeRedirect } from "@/lib/utils";
 
 import { useLogin } from "../../api";
+import { getOAuthUrl } from "../../lib/utils";
 import { signInSchema } from "../../schemas";
 import { GoogleIcon } from "../icons/google";
 
@@ -34,6 +36,21 @@ export const SignInForm = () => {
       password: "",
     },
   });
+
+  useEffect(() => {
+    if (searchParams.get("error") === "oauth_failed") {
+      toast.add({
+        title: "Google sign-in failed. Please try again",
+        type: "error",
+      });
+    }
+  }, [searchParams]);
+
+  function handleGoogleAuth() {
+    const url = new URL(getOAuthUrl("google"));
+    url.searchParams.set("redirect", redirectTo);
+    window.location.href = url.toString();
+  }
 
   function onSubmit(data: z.infer<typeof signInSchema>) {
     mutate(
@@ -66,7 +83,13 @@ export const SignInForm = () => {
       </p>
 
       <div className="mt-9 space-y-5">
-        <Button type="button" variant="outline" size="xl" className="w-full">
+        <Button
+          type="button"
+          variant="outline"
+          size="xl"
+          className="w-full"
+          onClick={handleGoogleAuth}
+        >
           <GoogleIcon className="size-3.5 grayscale-50" /> Continue with Google
         </Button>
         <div className="flex items-center gap-3 text-muted-foreground text-xs">

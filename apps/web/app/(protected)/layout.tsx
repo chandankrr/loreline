@@ -18,7 +18,7 @@ export default function ProtectedLayout({
   }, [isInitialized, user, router]);
 
   // if (!isInitialized) return <PageSkeleton />;
-  if (!user) return null;
+  // if (!user) return null;
 
   return <>{children}</>;
 }

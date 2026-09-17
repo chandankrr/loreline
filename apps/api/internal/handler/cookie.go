@@ -17,7 +17,7 @@ func (h Handler) setRefreshTokenCookie(c echo.Context, token string) {
 		Expires:  time.Now().Add(h.server.Config.Auth.RefreshTokenTTL),
 		HttpOnly: true,
 		Secure:   h.server.Config.Primary.Env == "production",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
@@ -30,6 +30,6 @@ func (h Handler) clearRefreshTokenCookie(c echo.Context) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   h.server.Config.Primary.Env == "production",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 }

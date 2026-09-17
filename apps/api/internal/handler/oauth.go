@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
@@ -24,7 +26,14 @@ func NewOAuthHandler(s *server.Server, authService *service.AuthService) *OAuthH
 
 func (h *OAuthHandler) BeginAuth(c echo.Context) error {
 	req := withProviderParam(c)
+
+	redirect := safeRedirectPath(c.QueryParam("redirect"))
+	q := req.URL.Query()
+	q.Set("state", redirect)
+	req.URL.RawQuery = q.Encode()
+
 	gothic.BeginAuthHandler(c.Response(), req)
+
 	return nil
 }
 
@@ -35,6 +44,8 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 	req := withProviderParam(c)
 
 	frontendURL := h.server.Config.Primary.FrontendURL
+
+	redirectPath := safeRedirectPath(gothic.GetState(req))
 
 	gothUser, err := gothic.CompleteUserAuth(c.Response(), req)
 	if err != nil {
@@ -59,7 +70,7 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 
 	h.setRefreshTokenCookie(c, refreshToken)
 
-	return c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/library")
+	return c.Redirect(http.StatusTemporaryRedirect, frontendURL+redirectPath)
 }
 
 // withProviderParam bridges echo's :provider path param to gothic
@@ -71,4 +82,19 @@ func withProviderParam(c echo.Context) *http.Request {
 	req.URL.RawQuery = q.Encode()
 
 	return req
+}
+
+func safeRedirectPath(raw string) string {
+	const fallback = "/library"
+
+	if raw == "" {
+		return fallback
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil || u.IsAbs() || u.Host != "" || !strings.HasPrefix(u.Path, "/") {
+		return fallback
+	}
+
+	return u.String()
 }
