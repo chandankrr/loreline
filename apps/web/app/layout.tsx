@@ -4,8 +4,7 @@ import { IBM_Plex_Mono, Manrope, Newsreader } from "next/font/google";
 import { cn } from "@loreline/ui/lib/utils";
 import "@loreline/ui/globals.css";
 
-import { Toaster } from "@loreline/ui/components/toast";
-import { TooltipProvider } from "@loreline/ui/components/tooltip";
+import { AppProvider } from "@/providers/app-provider";
 
 const sans = Manrope({ subsets: ["latin"], variable: "--font-loreline-sans" });
 const story = Newsreader({
@@ -21,9 +20,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL),
   title: "Loreline",
   description:
     "A realtime AI reading companion that sees the page with you, answers by voice, and turns difficult ideas into vivid understanding.",
@@ -53,8 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body className="min-h-full">
-        <TooltipProvider>{children}</TooltipProvider>
-        <Toaster />
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

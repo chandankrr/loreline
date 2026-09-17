@@ -5,6 +5,7 @@ import (
 
 	"github.com/chandankrr/loreline/internal/handler"
 	"github.com/chandankrr/loreline/internal/middleware"
+	v1 "github.com/chandankrr/loreline/internal/router/v1"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/service"
 	"github.com/labstack/echo/v4"
@@ -13,7 +14,7 @@ import (
 )
 
 func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services) *echo.Echo {
-	middlewares := middleware.NewMiddlewares(s)
+	middlewares := middleware.NewMiddlewares(s, services.Auth)
 
 	router := echo.New()
 
@@ -54,7 +55,9 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	registerSystemRoutes(router, h)
 
 	// register versioned routes
-	router.Group("/api/v1")
+	v1Router := router.Group("/api/v1")
+
+	v1.RegisterV1Routes(v1Router, h, middlewares)
 
 	return router
 }

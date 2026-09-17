@@ -4,9 +4,15 @@ import (
 	"net/http"
 )
 
-func NewUnauthorizedError(message string, override bool) *HTTPError {
+func NewUnauthorizedError(message string, override bool, code *string) *HTTPError {
+	formattedCode := MakeUpperCaseWithUnderscores(http.StatusText(http.StatusUnauthorized))
+
+	if code != nil {
+		formattedCode = *code
+	}
+
 	return &HTTPError{
-		Code:     MakeUpperCaseWithUnderscores(http.StatusText(http.StatusUnauthorized)),
+		Code:     formattedCode,
 		Message:  message,
 		Status:   http.StatusUnauthorized,
 		Override: override,
@@ -54,12 +60,36 @@ func NewNotFoundError(message string, override bool, code *string) *HTTPError {
 	}
 }
 
+func NewConflictError(message string, override bool, code *string) *HTTPError {
+	formattedCode := MakeUpperCaseWithUnderscores(http.StatusText(http.StatusConflict))
+
+	if code != nil {
+		formattedCode = *code
+	}
+
+	return &HTTPError{
+		Code:     formattedCode,
+		Message:  message,
+		Status:   http.StatusConflict,
+		Override: override,
+	}
+}
+
 func NewInternalServerError() *HTTPError {
 	return &HTTPError{
 		Code:     MakeUpperCaseWithUnderscores(http.StatusText(http.StatusInternalServerError)),
 		Message:  http.StatusText(http.StatusInternalServerError),
 		Status:   http.StatusInternalServerError,
 		Override: false,
+	}
+}
+
+func NewTooManyRequestsError(message string, override bool) *HTTPError {
+	return &HTTPError{
+		Code:     MakeUpperCaseWithUnderscores(http.StatusText(http.StatusTooManyRequests)),
+		Message:  message,
+		Status:   http.StatusTooManyRequests,
+		Override: override,
 	}
 }
 

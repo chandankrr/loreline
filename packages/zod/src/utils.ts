@@ -18,3 +18,7 @@ export const schemaWithPagination = <T>(
     limit: z.number(),
     totalPages: z.number(),
   });
+
+export const ZMessageResponse = z.object({
+  message: z.string(),
+});

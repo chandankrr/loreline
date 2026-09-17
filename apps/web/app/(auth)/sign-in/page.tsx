@@ -2,6 +2,8 @@ import { Logo } from "@/components/logo";
 
 import { SignInForm } from "@/features/auth/ui/components/sign-in-form";
 
+export const dynamic = "force-dynamic";
+
 export default function SignInPage() {
   return (
     <div className="flex min-h-[calc(100vh-1.5rem)] flex-col bg-background p-5 sm:p-8">

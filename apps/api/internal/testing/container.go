@@ -96,7 +96,7 @@ func SetupTestDB(t *testing.T) (*TestDB, func()) {
 			Address: "localhost:6379",
 		},
 		Auth: config.AuthConfig{
-			SecretKey: "test-secret",
+			JWTSecret: "test-secret",
 		},
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/chandankrr/loreline/internal/config"
 	"github.com/chandankrr/loreline/internal/database"
 	"github.com/chandankrr/loreline/internal/handler"
+	"github.com/chandankrr/loreline/internal/lib/oauth"
 	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/repository"
 	"github.com/chandankrr/loreline/internal/router"
@@ -43,6 +44,9 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize server")
 	}
+
+	// Register OAuth providers with goth
+	oauth.Setup(cfg)
 
 	// Initialize repositories, services, and handlers
 	repos := repository.NewRepositories(srv)

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"
@@ -18,11 +19,13 @@ type Config struct {
 	Redis         RedisConfig          `koanf:"redis" validate:"required"`
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Auth          AuthConfig           `koanf:"auth" validate:"required"`
+	OAuth         OAuthConfig          `koanf:"oauth" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 }
 
 type Primary struct {
-	Env string `koanf:"env" validate:"required"`
+	Env         string `koanf:"env" validate:"required"`
+	FrontendURL string `koanf:"frontend_url" validate:"required,url"`
 }
 
 type ServerConfig struct {
@@ -55,7 +58,21 @@ type IntegrationConfig struct {
 }
 
 type AuthConfig struct {
-	SecretKey string `koanf:"secret_key" validate:"required"`
+	JWTSecret              string        `koanf:"jwt_secret" validate:"required"`
+	AccessTokenTTL         time.Duration `koanf:"access_token_ttl" validate:"required"`
+	RefreshTokenTTL        time.Duration `koanf:"refresh_token_ttl" validate:"required"`
+	VerificationCodeSecret string        `koanf:"verification_code_secret" validate:"required"`
+}
+
+type OAuthConfig struct {
+	SessionSecret string              `koanf:"session_secret" validate:"required"`
+	CallbackURL   string              `koanf:"callback_url" validate:"required,url"`
+	Google        OAuthProviderConfig `koanf:"google" validate:"required"`
+}
+
+type OAuthProviderConfig struct {
+	ClientID     string `koanf:"client_id" validate:"required"`
+	ClientSecret string `koanf:"client_secret" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {

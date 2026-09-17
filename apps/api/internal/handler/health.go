@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chandankrr/loreline/internal/middleware"
+	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/labstack/echo/v4"
 )
@@ -23,7 +23,7 @@ func NewHealthHandler(s *server.Server) *HealthHandler {
 
 func (h *HealthHandler) CheckHealth(c echo.Context) error {
 	start := time.Now()
-	logger := middleware.GetLogger(c).With().
+	logger := logger.GetLogger(c).With().
 		Str("operation", "health_check").
 		Logger()
 

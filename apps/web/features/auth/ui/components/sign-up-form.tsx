@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, LoaderCircleIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -12,10 +13,17 @@ import { Field, FieldError, FieldLabel } from "@loreline/ui/components/field";
 import { Input } from "@loreline/ui/components/input";
 import { toast } from "@loreline/ui/components/toast";
 
+import { getApiErrorCode } from "@/api/utils";
+
+import { useRegister } from "../../api";
+import { getOAuthUrl } from "../../lib/utils";
 import { signUpSchema } from "../../schemas";
 import { GoogleIcon } from "../icons/google";
 
 export const SignUpForm = () => {
+  const router = useRouter();
+  const { mutate, isPending } = useRegister();
+
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -25,12 +33,31 @@ export const SignUpForm = () => {
     },
   });
 
+  function handleGoogleAuth() {
+    window.location.href = getOAuthUrl("google");
+  }
+
   function onSubmit(data: z.infer<typeof signUpSchema>) {
-    console.log(data);
-    toast.add({
-      title: "Signed up successfully",
-      type: "success",
-    });
+    mutate(
+      { body: data },
+      {
+        onSuccess: () => {
+          toast.add({
+            title: "Signed up successfully",
+            type: "success",
+          });
+          router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+        },
+        onError: (error) => {
+          if (getApiErrorCode(error) === "EMAIL_ALREADY_IN_USE") {
+            form.setError("email", {
+              type: "server",
+              message: "An account with this email already exists",
+            });
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -44,7 +71,13 @@ export const SignUpForm = () => {
       </p>
 
       <div className="mt-9 space-y-5">
-        <Button type="button" variant="outline" size="xl" className="w-full">
+        <Button
+          type="button"
+          variant="outline"
+          size="xl"
+          className="w-full"
+          onClick={handleGoogleAuth}
+        >
           <GoogleIcon className="size-3.5 grayscale-50" /> Continue with Google
         </Button>
         <div className="flex items-center gap-3 text-muted-foreground text-xs">
@@ -118,7 +151,13 @@ export const SignUpForm = () => {
               </Field>
             )}
           />
-          <Button type="submit" size="xl" className="w-full">
+          <Button
+            type="submit"
+            size="xl"
+            className="w-full"
+            disabled={isPending}
+          >
+            {isPending ? <LoaderCircleIcon className="animate-spin" /> : null}
             Sign up
             <ArrowRightIcon data-icon="inline-end" />
           </Button>
