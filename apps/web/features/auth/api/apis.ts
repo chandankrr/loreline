@@ -19,20 +19,34 @@ import type {
   TVerifyEmailResponse,
 } from "./types";
 
+let sessionRequest: Promise<{
+  accessToken: string;
+  user: TCurrentUserResponse;
+} | null> | null = null;
+
 export const fetchSession = async ({
   api,
 }: {
   api: TApiClient;
 }): Promise<{ accessToken: string; user: TCurrentUserResponse } | null> => {
-  try {
-    const { accessToken } = await refresh({ api });
-    authStore.setAccessToken(accessToken);
-    const user = await currentUser({ api });
-    return { accessToken, user };
-  } catch {
-    authStore.clearAuth();
-    return null;
-  }
+  if (sessionRequest) return sessionRequest;
+
+  sessionRequest = (async () => {
+    try {
+      const { accessToken } = await refresh({ api });
+      authStore.setAccessToken(accessToken);
+
+      const user = await currentUser({ api });
+
+      return { accessToken, user };
+    } catch {
+      return null;
+    } finally {
+      sessionRequest = null;
+    }
+  })();
+
+  return sessionRequest;
 };
 
 export const register = async ({

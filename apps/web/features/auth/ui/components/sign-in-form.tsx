@@ -58,6 +58,7 @@ export const SignInForm = () => {
       {
         onSuccess: () => {
           toast.add({ title: "Signed in successfully", type: "success" });
+          router.refresh();
           router.push(redirectTo);
         },
         onError: (error) => {
