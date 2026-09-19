@@ -1,6 +1,6 @@
 "use client";
 
-import { type PropsWithChildren, useEffect, useRef } from "react";
+import { type PropsWithChildren, useEffect } from "react";
 
 import { useApiClient } from "@/api/api-client";
 
@@ -13,31 +13,35 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const setInitialized = useAuthStore((s) => s.setInitialized);
 
-  const sessionPromiseRef = useRef<ReturnType<typeof fetchSession> | null>(
-    null,
-  );
-
   useEffect(() => {
     let cancelled = false;
 
-    if (!sessionPromiseRef.current) {
-      sessionPromiseRef.current = fetchSession({ api });
-    }
+    const initializeAuth = async () => {
+      const session = await fetchSession({ api });
 
-    sessionPromiseRef.current.then((session) => {
       if (cancelled) return;
+
       if (session) {
         setAuth(session.accessToken, session.user);
       } else {
-        clearAuth();
+        // Don't wipe out a session established by another auth flow
+        // while this initial session check was running.
+        const currentUser = useAuthStore.getState().user;
+
+        if (!currentUser) {
+          clearAuth();
+        }
       }
+
       setInitialized(true);
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       cancelled = true;
     };
-  }, [api, clearAuth, setAuth, setInitialized]);
+  }, [api, setAuth, clearAuth, setInitialized]);
 
   return <>{children}</>;
 };
