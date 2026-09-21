@@ -1,3 +1,8 @@
+CREATE TYPE verification_type AS ENUM (
+    'email_verification',
+    'password_reset'
+);
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -25,8 +30,8 @@ CREATE TABLE sessions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_sessions_token ON sessions(token);
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE UNIQUE INDEX sessions_token_idx ON sessions(token);
+CREATE INDEX sessions_user_idx ON sessions(user_id);
 
 CREATE TRIGGER set_updated_at_sessions
     BEFORE UPDATE ON sessions
@@ -50,17 +55,12 @@ CREATE TABLE accounts (
     CONSTRAINT accounts_provider_account_uniq UNIQUE (provider_id, account_id)
 );
 
-CREATE INDEX idx_accounts_user_id ON accounts(user_id);
+CREATE INDEX accounts_user_idx ON accounts(user_id);
 
 CREATE TRIGGER set_updated_at_accounts
     BEFORE UPDATE ON accounts
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
-
-CREATE TYPE verification_type AS ENUM (
-    'email_verification',
-    'password_reset'
-);
 
 CREATE TABLE verification (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,8 +73,8 @@ CREATE TABLE verification (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_verification_identifier ON verification(identifier);
-CREATE INDEX idx_verification_identifier_type ON verification(identifier, type);
+CREATE INDEX verification_identifier_idx ON verification(identifier);
+CREATE INDEX verification_identifier_type_idx ON verification(identifier, type);
 
 CREATE TRIGGER set_updated_at_verification
     BEFORE UPDATE ON verification
