@@ -55,7 +55,7 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			}
 
 			// Get enhanced logger from context
-			logger := logger.GetLogger(c)
+			logger := logger.GetLogger(c.Request().Context())
 
 			var e *zerolog.Event
 
@@ -155,7 +155,7 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(err error, c echo.Context) {
 
 	// Log the original error to help with debugging
 	// Use enhanced logger from context which already includes request_id, method, path, ip, user context, and trace context
-	logger := *logger.GetLogger(c)
+	logger := *logger.GetLogger(c.Request().Context())
 
 	logger.Error().Stack().
 		Err(originalErr).

@@ -7,6 +7,7 @@ type Repositories struct {
 	Session      *SessionRepository
 	Account      *AccountRepository
 	Verification *VerificationRepository
+	Folder       *FolderRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -15,5 +16,6 @@ func NewRepositories(s *server.Server) *Repositories {
 		Session:      NewSessionRepository(s),
 		Account:      NewAccountRepository(s),
 		Verification: NewVerificationRepository(s),
+		Folder:       NewFolderRepository(s),
 	}
 }

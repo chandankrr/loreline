@@ -117,7 +117,7 @@ func handleRequest[Req validation.Validatable](
 	}
 
 	// Get context-enhanced logger
-	loggerBuilder := logger.GetLogger(c).With().
+	loggerBuilder := logger.GetLogger(c.Request().Context()).With().
 		Str("operation", responseHandler.GetOperation()).
 		Str("method", method).
 		Str("path", path).

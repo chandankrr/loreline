@@ -28,7 +28,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.RegisterPayload) (*dto.MessageResponse, error) {
-			_, err := h.authService.Register(c, payload)
+			_, err := h.authService.Register(c.Request().Context(), payload)
 			if err != nil {
 				if errors.Is(err, service.ErrEmailInUse) {
 					code := "EMAIL_ALREADY_IN_USE"
@@ -52,7 +52,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 			userAgent := c.Request().UserAgent()
 
 			accessToken, refreshToken, err := h.authService.Login(
-				c,
+				c.Request().Context(),
 				payload,
 				ipAddress,
 				userAgent,
@@ -86,7 +86,10 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 		func(c echo.Context, payload *dto.EmptyPayload) error {
 			cookie, err := c.Cookie(refreshTokenCookieName)
 			if err == nil && cookie.Value != "" {
-				if err := h.authService.Logout(c, cookie.Value); err != nil {
+				if err := h.authService.Logout(
+					c.Request().Context(),
+					cookie.Value,
+				); err != nil {
 					return err
 				}
 			}
@@ -113,7 +116,7 @@ func (h *AuthHandler) RefreshToken(c echo.Context) error {
 			userAgent := c.Request().UserAgent()
 
 			accessToken, refreshToken, err := h.authService.RefreshAccessToken(
-				c,
+				c.Request().Context(),
 				cookie.Value,
 				ipAddress,
 				userAgent,
@@ -148,13 +151,18 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.VerifyEmailPayload) (*dto.MessageResponse, error) {
-			err := h.authService.VerifyEmail(c, payload.Email, payload.Code)
+			err := h.authService.VerifyEmail(
+				c.Request().Context(),
+				payload.Email,
+				payload.Code,
+			)
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrInvalidVerificationCode):
 					code := "INVALID_CODE"
 					return nil,
-						errs.NewBadRequestError("Invalid verification code", false, &code, nil, nil)
+						errs.NewBadRequestError(
+							"Invalid verification code", false, &code, nil, nil)
 				case errors.Is(err, service.ErrVerificationExpired):
 					code := "CODE_EXPIRED"
 					return nil,
@@ -181,7 +189,10 @@ func (h *AuthHandler) ResendVerificationEmail(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.ResendVerificationPayload) (*dto.MessageResponse, error) {
-			err := h.authService.ResendVerificationEmail(c, payload.Email)
+			err := h.authService.ResendVerificationEmail(
+				c.Request().Context(),
+				payload.Email,
+			)
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrEmailAlreadyVerified):
@@ -208,7 +219,7 @@ func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.ForgotPasswordPayload) (*dto.MessageResponse, error) {
-			err := h.authService.ForgotPassword(c, payload.Email)
+			err := h.authService.ForgotPassword(c.Request().Context(), payload.Email)
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrTooManyRequests):
@@ -232,7 +243,11 @@ func (h *AuthHandler) ResetPassword(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.ResetPasswordPayload) (*dto.MessageResponse, error) {
-			err := h.authService.ResetPassword(c, payload.Token, payload.Password)
+			err := h.authService.ResetPassword(
+				c.Request().Context(),
+				payload.Token,
+				payload.Password,
+			)
 			if err != nil {
 				switch {
 				case errors.Is(err, service.ErrInvalidResetToken):
@@ -258,7 +273,7 @@ func (h *AuthHandler) Me(c echo.Context) error {
 		func(c echo.Context, payload *dto.EmptyPayload) (*dto.UserResponse, error) {
 			userID := middleware.GetUserID(c)
 
-			user, err := h.authService.GetCurrentUser(c, userID)
+			user, err := h.authService.GetCurrentUser(c.Request().Context(), userID)
 			if err != nil {
 				return nil, err
 			}

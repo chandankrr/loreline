@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/config"
-	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
@@ -216,8 +216,8 @@ func GetPgxTraceLogLevel(level zerolog.Level) int {
 }
 
 // GetLogger retrieves request logger from context
-func GetLogger(c echo.Context) *zerolog.Logger {
-	if l, ok := c.Get(LoggerKey).(*zerolog.Logger); ok {
+func GetLogger(ctx context.Context) *zerolog.Logger {
+	if l, ok := ctx.Value(LoggerKey).(*zerolog.Logger); ok {
 		return l
 	}
 	// Fallback to a basic logger if not found

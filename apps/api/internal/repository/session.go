@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
+	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/lib/utils/token"
 	"github.com/chandankrr/loreline/internal/model/session"
 	"github.com/chandankrr/loreline/internal/server"
@@ -64,22 +66,12 @@ func (r *SessionRepository) CreateSession(
 		"user_agent": userAgent,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute create session query for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:sessions for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		return nil, fmt.Errorf("failed to collect session: %w", err)
 	}
 
 	// Return original token instead of hash token
@@ -88,7 +80,10 @@ func (r *SessionRepository) CreateSession(
 	return &sessionItem, nil
 }
 
-func (r *SessionRepository) GetSession(ctx context.Context, sessionToken string) (*session.Session, error) {
+func (r *SessionRepository) GetSession(
+	ctx context.Context,
+	sessionToken string,
+) (*session.Session, error) {
 	stmt := `
 		SELECT
 			*
@@ -104,22 +99,16 @@ func (r *SessionRepository) GetSession(ctx context.Context, sessionToken string)
 		"token": tokenHash,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute get session by token query for token=%s: %w",
-				tokenHash,
-				err,
-			)
+		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:session for token=%s: %w",
-				tokenHash,
-				err,
-			)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrSessionNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect session: %w", err)
 	}
 
 	// Return original token instead of hash token
@@ -128,7 +117,11 @@ func (r *SessionRepository) GetSession(ctx context.Context, sessionToken string)
 	return &sessionItem, nil
 }
 
-func (r *SessionRepository) RevokeSession(ctx context.Context, db database.DBTX, sessionToken string) error {
+func (r *SessionRepository) RevokeSession(
+	ctx context.Context,
+	db database.DBTX,
+	sessionToken string,
+) error {
 	stmt := `
 		UPDATE sessions
 		SET
@@ -144,13 +137,16 @@ func (r *SessionRepository) RevokeSession(ctx context.Context, db database.DBTX,
 		"token": tokenHash,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to execute query: %w", err)
+		return fmt.Errorf("failed to revoke session: %w", err)
 	}
 
 	return nil
 }
 
-func (r *SessionRepository) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
+func (r *SessionRepository) RevokeAllUserSessions(
+	ctx context.Context,
+	userID uuid.UUID,
+) error {
 	stmt := `
 		UPDATE sessions
 		SET
@@ -164,7 +160,7 @@ func (r *SessionRepository) RevokeAllUserSessions(ctx context.Context, userID uu
 		"user_id": userID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to execute query: %w", err)
+		return fmt.Errorf("failed to revoke user sessions: %w", err)
 	}
 
 	return nil

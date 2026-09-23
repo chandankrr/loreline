@@ -23,7 +23,7 @@ func NewHealthHandler(s *server.Server) *HealthHandler {
 
 func (h *HealthHandler) CheckHealth(c echo.Context) error {
 	start := time.Now()
-	logger := logger.GetLogger(c).With().
+	logger := logger.GetLogger(c.Request().Context()).With().
 		Str("operation", "health_check").
 		Logger()
 

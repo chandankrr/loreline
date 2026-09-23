@@ -34,6 +34,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("missing authorization header")
+
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
@@ -46,6 +47,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("invalid authorization header format")
+
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
@@ -57,6 +59,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("empty access token")
+
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
@@ -68,6 +71,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("invalid or expired access token")
+
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
@@ -79,6 +83,7 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
 				Msg("user id missing from token claims")
+
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 

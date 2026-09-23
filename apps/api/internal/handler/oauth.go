@@ -38,7 +38,7 @@ func (h *OAuthHandler) BeginAuth(c echo.Context) error {
 }
 
 func (h *OAuthHandler) Callback(c echo.Context) error {
-	logger := logger.GetLogger(c)
+	logger := logger.GetLogger(c.Request().Context())
 	provider := c.Param("provider")
 
 	req := withProviderParam(c)
@@ -59,7 +59,12 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 	ipAddress := c.RealIP()
 	userAgent := c.Request().UserAgent()
 
-	_, refreshToken, err := h.authService.OAuthLogin(c, gothUser, ipAddress, userAgent)
+	_, refreshToken, err := h.authService.OAuthLogin(
+		c.Request().Context(),
+		gothUser,
+		ipAddress,
+		userAgent,
+	)
 	if err != nil {
 		logger.Error().
 			Err(err).

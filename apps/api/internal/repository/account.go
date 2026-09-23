@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
+	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/account"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -52,22 +54,12 @@ func (r *AccountRepository) CreateCredentialAccount(
 		"password":    passwordHash,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute create account query for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		return nil, fmt.Errorf("failed to create credential account: %w", err)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:accounts for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		return nil, fmt.Errorf("failed to collect account: %w", err)
 	}
 
 	return &accountItem, nil
@@ -90,22 +82,16 @@ func (r *AccountRepository) GetCredentialAccount(
 		"user_id": userID,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute get credential account query for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		return nil, fmt.Errorf("failed to get credential account: %w", err)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:accounts for user_id=%s: %w",
-				userID.String(),
-				err,
-			)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrAccountNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect account: %w", err)
 	}
 
 	return &accountItem, nil
@@ -131,7 +117,7 @@ func (r *AccountRepository) UpdatePassword(
 		"password": passwordHash,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update password for user_id=%s: %w", userID.String(), err)
+		return fmt.Errorf("failed to update account password: %w", err)
 	}
 
 	return nil
@@ -184,25 +170,12 @@ func (r *AccountRepository) CreateOAuthAccount(
 		"scope":                   scope,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute create account query for user_id=%s account_id=%s provider_id=%s: %w",
-				userID.String(),
-				accountID,
-				providerID,
-				err,
-			)
+		return nil, fmt.Errorf("failed to create oauth account: %w", err)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:accounts for user_id=%s account_id=%s provider_id=%s: %w", userID,
-				accountID,
-				providerID,
-				err,
-			)
+		return nil, fmt.Errorf("failed to collect account: %w", err)
 	}
 
 	return &accountItem, nil
@@ -226,24 +199,16 @@ func (r *AccountRepository) GetByProviderAndAccountID(
 		"account_id":  AccountID,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute get account by provider_id and account_id query for provider_id=%s account_id=%s: %w",
-				providerID,
-				AccountID,
-				err,
-			)
+		return nil, fmt.Errorf("failed to get account by provider and account id: %w", err)
 	}
 
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:accounts for provider_id=%s account_id=%s: %w",
-				providerID,
-				AccountID,
-				err,
-			)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrAccountNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect account: %w", err)
 	}
 
 	return &accountItem, nil
@@ -277,12 +242,16 @@ func (r *AccountRepository) UpdateOAuthTokens(
 		"id":                      id,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
+		return nil, fmt.Errorf("failed to update oauth tokens: %w", err)
 	}
 
 	updatedAccount, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:accounts: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrAccountNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect account: %w", err)
 	}
 
 	return &updatedAccount, nil

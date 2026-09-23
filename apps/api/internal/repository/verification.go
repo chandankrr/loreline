@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
+	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/verification"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -52,24 +54,15 @@ func (r *VerificationRepository) Create(
 		"expires_at": expiresAt,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute create verification query for identifier=%s type=%s: %w",
-				identifier,
-				verificationType,
-				err,
-			)
+		return nil, fmt.Errorf("failed to create verification: %w", err)
 	}
 
-	verificationItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[verification.Verification])
+	verificationItem, err := pgx.CollectOneRow(
+		rows,
+		pgx.RowToStructByName[verification.Verification],
+	)
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:verification for identifier=%s type=%s: %w",
-				identifier,
-				verificationType,
-				err,
-			)
+		return nil, fmt.Errorf("failed to collect verification: %w", err)
 	}
 
 	return &verificationItem, nil
@@ -96,24 +89,19 @@ func (r *VerificationRepository) GetLatestByIdentifierAndType(
 		"type":       verificationType,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute get latest verification query for identifier=%s type=%s: %w",
-				identifier,
-				verificationType,
-				err,
-			)
+		return nil, fmt.Errorf("failed to get latest verification: %w", err)
 	}
 
-	verificationItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[verification.Verification])
+	verificationItem, err := pgx.CollectOneRow(
+		rows,
+		pgx.RowToStructByName[verification.Verification],
+	)
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:verification for identifier=%s type=%s: %w",
-				identifier,
-				verificationType,
-				err,
-			)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrVerificationNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect verification: %w", err)
 	}
 
 	return &verificationItem, nil
@@ -140,27 +128,22 @@ func (r *VerificationRepository) GetByValueAndType(
 		"type":  verificationType,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute get verification query for value=%s type=%s: %w",
-				value,
-				verificationType,
-				err,
-			)
+		return nil, fmt.Errorf("failed to get verification by value: %w", err)
 	}
 
-	item, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[verification.Verification])
+	verificationItem, err := pgx.CollectOneRow(
+		rows,
+		pgx.RowToStructByName[verification.Verification],
+	)
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:verification for value=%s type=%s: %w",
-				value,
-				verificationType,
-				err,
-			)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrVerificationNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect verification: %w", err)
 	}
 
-	return &item, nil
+	return &verificationItem, nil
 }
 
 func (r *VerificationRepository) DeleteByIdentifierAndType(
@@ -181,12 +164,7 @@ func (r *VerificationRepository) DeleteByIdentifierAndType(
 		"type":       verificationType,
 	})
 	if err != nil {
-		return fmt.Errorf(
-			"failed to execute delete verification query for identifier=%s type=%s: %w",
-			identifier,
-			verificationType,
-			err,
-		)
+		return fmt.Errorf("failed to delete verification: %w", err)
 	}
 
 	return nil
@@ -204,7 +182,7 @@ func (r *VerificationRepository) DeleteExpired(
 
 	_, err := db.Exec(ctx, stmt)
 	if err != nil {
-		return fmt.Errorf("failed to execute delete expired verification query: %w", err)
+		return fmt.Errorf("failed to delete expired verifications: %w", err)
 	}
 
 	return nil
@@ -235,10 +213,11 @@ func (r *VerificationRepository) IncrementAttempts(
 	).Scan(&attempts)
 
 	if err != nil {
-		return 0, fmt.Errorf(
-			"failed to execute increment verification attempts query: %w",
-			err,
-		)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, errs.ErrVerificationNotFound
+		}
+
+		return 0, fmt.Errorf("failed to increment verification attempts: %w", err)
 	}
 
 	return attempts, nil

@@ -15,7 +15,7 @@ func Generate() (string, error) {
 	b := make([]byte, TokenBytes)
 
 	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("failed to generate secure token: %w", err)
+		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
 	return base64.RawURLEncoding.EncodeToString(b), nil

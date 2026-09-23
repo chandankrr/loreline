@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/chandankrr/loreline/internal/database"
+	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/user"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
@@ -52,24 +54,12 @@ func (r *UserRepository) CreateUser(
 		"email_verified": emailVerified,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to execute create user query for name=%s email=%s: %w",
-				name,
-				email,
-				err,
-			)
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to collect row from table:users for name=%s email=%s: %w",
-				name,
-				email,
-				err,
-			)
+		return nil, fmt.Errorf("failed to collect user: %w", err)
 	}
 
 	return &userItem, nil
@@ -88,14 +78,16 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 		"email": email,
 	})
 	if err != nil {
-		return nil,
-			fmt.Errorf("failed to execute get user by email query for email=%s: %w", email, err)
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil,
-			fmt.Errorf("failed to collect row from table:users for email=%s: %w", email, err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect user: %w", err)
 	}
 
 	return &userItem, nil
@@ -115,13 +107,16 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User
 	})
 	if err != nil {
 		return nil,
-			fmt.Errorf("failed to execute get user by id query for id=%s: %w", id, err)
+			fmt.Errorf("failed to get user by id: %w", err)
 	}
 
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
-		return nil,
-			fmt.Errorf("failed to collect row from table:users for id=%s: %w", id, err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("failed to collect user: %w", err)
 	}
 
 	return &userItem, nil
@@ -146,7 +141,7 @@ func (r *UserRepository) UpdateEmailVerified(
 		"email_verified": verified,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update email_verified for user_id=%s: %w", userID.String(), err)
+		return fmt.Errorf("failed to update user email verification: %w", err)
 	}
 
 	return nil
