@@ -8,6 +8,7 @@ import (
 	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/sqlerr"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -74,8 +75,8 @@ func (global *GlobalMiddlewares) RequestLogger() echo.MiddlewareFunc {
 			}
 
 			// Add user context if available
-			if userID := GetUserID(c); userID != "" {
-				e = e.Str("user_id", userID)
+			if userID := GetUserID(c); userID != uuid.Nil {
+				e = e.Str("user_id", userID.String())
 			}
 
 			e.

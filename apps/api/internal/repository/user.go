@@ -93,7 +93,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	return &userItem, nil
 }
 
-func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	stmt := `
 		SELECT
 			*

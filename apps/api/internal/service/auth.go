@@ -23,6 +23,7 @@ import (
 	"github.com/chandankrr/loreline/internal/repository"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -81,14 +82,16 @@ func NewAuthService(
 
 func (s *AuthService) Register(
 	ctx context.Context,
-	payload *dto.RegisterPayload,
+	name string,
+	email string,
+	password string,
 ) (*user.User, error) {
 	logger := logger.GetLogger(ctx)
 
-	_, err := s.userRepo.GetUserByEmail(ctx, payload.Email)
+	_, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err == nil {
 		logger.Warn().
-			Str("email", payload.Email).
+			Str("email", email).
 			Msg("user already exists with email")
 
 		return nil, ErrEmailInUse
@@ -97,13 +100,13 @@ func (s *AuthService) Register(
 	if !errors.Is(err, errs.ErrUserNotFound) {
 		logger.Error().
 			Err(err).
-			Str("email", payload.Email).
+			Str("email", email).
 			Msg("failed to get user by email")
 
 		return nil, err
 	}
 
-	hashPassword, err := hashPassword(payload.Password)
+	hashPassword, err := hashPassword(password)
 	if err != nil {
 		logger.Error().
 			Err(err).
@@ -125,15 +128,15 @@ func (s *AuthService) Register(
 	createdUser, err := s.userRepo.CreateUser(
 		ctx,
 		tx,
-		payload.Name,
-		payload.Email,
+		name,
+		email,
 		nil,
 		false,
 	)
 	if err != nil {
 		if errors.Is(err, ErrEmailInUse) {
 			logger.Warn().
-				Str("email", payload.Email).
+				Str("email", email).
 				Msg("user already exists with email")
 
 			return nil, ErrEmailInUse
@@ -278,7 +281,7 @@ func (s *AuthService) OAuthLogin(
 	)
 	if err == nil {
 		// Existing oauth user.
-		user, err = s.userRepo.GetUserByID(ctx, account.UserID.String())
+		user, err = s.userRepo.GetUserByID(ctx, account.UserID)
 		if err != nil {
 			logger.Error().
 				Err(err).
@@ -583,7 +586,7 @@ func (s *AuthService) RefreshAccessToken(
 		return "", "", ErrExpiredToken
 	}
 
-	user, err := s.userRepo.GetUserByID(ctx, session.UserID.String())
+	user, err := s.userRepo.GetUserByID(ctx, session.UserID)
 	if err != nil {
 		logger.Error().
 			Err(err).
@@ -1175,7 +1178,7 @@ func (s *AuthService) ResetPassword(
 
 func (s *AuthService) GetCurrentUser(
 	ctx context.Context,
-	userID string,
+	userID uuid.UUID,
 ) (*user.User, error) {
 	logger := logger.GetLogger(ctx)
 
@@ -1183,7 +1186,7 @@ func (s *AuthService) GetCurrentUser(
 	if err != nil {
 		if errors.Is(err, errs.ErrUserNotFound) {
 			logger.Warn().
-				Str("user_id", userID).
+				Str("user_id", userID.String()).
 				Msg("current user not found")
 
 			return nil, errs.ErrUserNotFound
@@ -1198,7 +1201,7 @@ func (s *AuthService) GetCurrentUser(
 
 	logger.Info().
 		Str("event", "get_current_user").
-		Str("user_id", userID).
+		Str("user_id", userID.String()).
 		Msg("current user fetched successfully")
 
 	return currentUser, nil

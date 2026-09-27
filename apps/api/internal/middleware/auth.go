@@ -7,6 +7,7 @@ import (
 	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/chandankrr/loreline/internal/service"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -76,22 +77,22 @@ func (auth *AuthMiddleware) RequiredAuth(next echo.HandlerFunc) echo.HandlerFunc
 		}
 
 		// Extract user ID from JWT claims
-		userID := claims.Subject
-		if userID == "" {
+		userID, err := uuid.Parse(claims.Subject)
+		if err != nil {
 			auth.server.Logger.Error().
 				Str("function", "RequiredAuth").
 				Str("request_id", GetRequestID(c)).
 				Dur("duration", time.Since(start)).
-				Msg("user id missing from token claims")
+				Msg("invalid user id in token claims")
 
 			return errs.NewUnauthorizedError("Unauthorized", false, nil)
 		}
 
-		c.Set("user_id", userID)
+		c.Set(UserIDKey, userID)
 
 		auth.server.Logger.Info().
 			Str("function", "RequiredAuth").
-			Str("user_id", userID).
+			Str("user_id", userID.String()).
 			Str("request_id", GetRequestID(c)).
 			Dur("duration", time.Since(start)).
 			Msg("user authenticated successfully")

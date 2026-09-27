@@ -28,7 +28,12 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *dto.RegisterPayload) (*dto.MessageResponse, error) {
-			_, err := h.authService.Register(c.Request().Context(), payload)
+			_, err := h.authService.Register(
+				c.Request().Context(),
+				payload.Name,
+				payload.Email,
+				payload.Password,
+			)
 			if err != nil {
 				if errors.Is(err, service.ErrEmailInUse) {
 					code := "EMAIL_ALREADY_IN_USE"

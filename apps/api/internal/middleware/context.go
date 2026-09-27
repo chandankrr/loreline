@@ -5,6 +5,7 @@ import (
 
 	"github.com/chandankrr/loreline/internal/logger"
 	"github.com/chandankrr/loreline/internal/server"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
@@ -44,11 +45,11 @@ func (ce *ContextEnhancer) EnhanceContext() echo.MiddlewareFunc {
 
 			// Extract user information from JWT token or session
 			if userID := ce.extractUserID(c); userID != "" {
-				contextLogger = contextLogger.With().Str("user_id", userID).Logger()
+				contextLogger = contextLogger.With().Str(UserIDKey, userID).Logger()
 			}
 
 			if userRole := ce.extractUserRole(c); userRole != "" {
-				contextLogger = contextLogger.With().Str("user_role", userRole).Logger()
+				contextLogger = contextLogger.With().Str(UserRoleKey, userRole).Logger()
 			}
 
 			// Store the enhanced logger in context
@@ -65,7 +66,7 @@ func (ce *ContextEnhancer) EnhanceContext() echo.MiddlewareFunc {
 
 func (ce *ContextEnhancer) extractUserID(c echo.Context) string {
 	// Check if user_id was already set by auth middleware
-	if userID, ok := c.Get("user_id").(string); ok && userID != "" {
+	if userID, ok := c.Get(UserIDKey).(string); ok && userID != "" {
 		return userID
 	}
 	return ""
@@ -73,15 +74,16 @@ func (ce *ContextEnhancer) extractUserID(c echo.Context) string {
 
 func (ce *ContextEnhancer) extractUserRole(c echo.Context) string {
 	// Check if user_role was set by auth middleware
-	if userRole, ok := c.Get("user_role").(string); ok && userRole != "" {
+	if userRole, ok := c.Get(UserIDKey).(string); ok && userRole != "" {
 		return userRole
 	}
 	return ""
 }
 
-func GetUserID(c echo.Context) string {
-	if userID, ok := c.Get(UserIDKey).(string); ok {
+func GetUserID(c echo.Context) uuid.UUID {
+	if userID, ok := c.Get(UserIDKey).(uuid.UUID); ok {
 		return userID
 	}
-	return ""
+
+	return uuid.Nil
 }
