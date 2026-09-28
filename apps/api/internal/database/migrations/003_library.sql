@@ -20,9 +20,6 @@ CREATE TABLE folders (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT folders_id_user_uniq UNIQUE (id, user_id),
-    -- Prevent duplicate folder names for the same user under the same parent
-    CONSTRAINT folders_user_parent_name_uniq
-    UNIQUE (user_id, parent_id, name),
     -- Parent folder must belong to the same user
     CONSTRAINT folders_parent_owner_fk
         FOREIGN KEY (parent_id, user_id)
@@ -32,6 +29,9 @@ CREATE TABLE folders (
 
 CREATE INDEX folders_user_idx ON folders(user_id);
 CREATE INDEX folders_parent_user_idx ON folders(parent_id, user_id);
+-- Prevent duplicate folder names for the same user under the same parent
+CREATE UNIQUE INDEX folders_user_parent_name_uniq
+    ON folders (user_id, parent_id, lower(name)) NULLS NOT DISTINCT;
 
 CREATE TRIGGER set_updated_at_folders
     BEFORE UPDATE ON folders

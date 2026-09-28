@@ -10,6 +10,7 @@ type Handlers struct {
 	OpenAPI *OpenAPIHandler
 	Auth    *AuthHandler
 	OAuth   *OAuthHandler
+	Folder  *FolderHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
@@ -18,5 +19,6 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		OpenAPI: NewOpenAPIHandler(s),
 		Auth:    NewAuthHandler(s, services.Auth),
 		OAuth:   NewOAuthHandler(s, services.Auth),
+		Folder:  NewFolderHandler(s, services.Folder),
 	}
 }

@@ -9,4 +9,7 @@ import (
 func RegisterV1Routes(router *echo.Group, handlers *handler.Handlers, middleware *middleware.Middlewares) {
 	// Register auth routes
 	registerAuthRoutes(router, handlers.Auth, handlers.OAuth, middleware.Auth)
+
+	// Register folder routes
+	registerFolderRoutes(router, handlers.Folder, middleware.Auth)
 }
