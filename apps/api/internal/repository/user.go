@@ -6,12 +6,13 @@ import (
 	"fmt"
 
 	"github.com/chandankrr/loreline/internal/database"
-	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/user"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 type UserRepository struct {
 	server *server.Server
@@ -84,7 +85,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrUserNotFound
+			return nil, ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect user: %w", err)
@@ -113,7 +114,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 	userItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrUserNotFound
+			return nil, ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect user: %w", err)

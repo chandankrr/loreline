@@ -53,6 +53,7 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 			Err(err).
 			Str("provider", provider).
 			Msg("oauth callback failed")
+
 		return c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/sign-in?error=oauth_failed")
 	}
 
@@ -70,6 +71,7 @@ func (h *OAuthHandler) Callback(c echo.Context) error {
 			Err(err).
 			Str("provider", provider).
 			Msg("oauth login failed")
+
 		return c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/sign-in?error=oauth_failed")
 	}
 

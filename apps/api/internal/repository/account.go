@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
-	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/account"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrAccountNotFound = errors.New("account not found")
 
 type AccountRepository struct {
 	server *server.Server
@@ -88,7 +89,7 @@ func (r *AccountRepository) GetCredentialAccount(
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrAccountNotFound
+			return nil, ErrAccountNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect account: %w", err)
@@ -205,7 +206,7 @@ func (r *AccountRepository) GetByProviderAndAccountID(
 	accountItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrAccountNotFound
+			return nil, ErrAccountNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect account: %w", err)
@@ -248,7 +249,7 @@ func (r *AccountRepository) UpdateOAuthTokens(
 	updatedAccount, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[account.Account])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrAccountNotFound
+			return nil, ErrAccountNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect account: %w", err)

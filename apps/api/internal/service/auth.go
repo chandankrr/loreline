@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/dto"
-	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/lib/job"
 	"github.com/chandankrr/loreline/internal/lib/utils/token"
 	"github.com/chandankrr/loreline/internal/logger"
@@ -40,6 +39,9 @@ var (
 	ErrInvalidToken                 = errors.New("invalid token")
 	ErrExpiredToken                 = errors.New("token has expired")
 	ErrEmailInUse                   = errors.New("email already in use")
+	ErrUserNotFound                 = repository.ErrUserNotFound
+	ErrAccountNotFound              = repository.ErrAccountNotFound
+	ErrVerificationNotFound         = repository.ErrVerificationNotFound
 	ErrEmailAlreadyVerified         = errors.New("email is already verified")
 	ErrEmailNotVerified             = errors.New("email is not verified")
 	ErrInvalidVerificationCode      = errors.New("invalid verification code")
@@ -97,7 +99,7 @@ func (s *AuthService) Register(
 		return nil, ErrEmailInUse
 	}
 
-	if !errors.Is(err, errs.ErrUserNotFound) {
+	if !errors.Is(err, ErrUserNotFound) {
 		logger.Error().
 			Err(err).
 			Str("email", email).
@@ -344,10 +346,10 @@ func (s *AuthService) OAuthLogin(
 
 			return "", "", err
 		}
-	} else if errors.Is(err, errs.ErrAccountNotFound) {
+	} else if errors.Is(err, ErrAccountNotFound) {
 		// Account doesn't exist. Check if user exists by email (Account linking)
 		user, err = s.userRepo.GetUserByEmail(ctx, gothUser.Email)
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			// User doesn't exist either. Create new user + OAuth account.
 			isNewUser = true
 
@@ -664,7 +666,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) error
 
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			logger.Warn().
 				Str("email", email).
 				Msg("user not found for email verification")
@@ -694,7 +696,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) error
 		verification.TypeEmailVerification,
 	)
 	if err != nil {
-		if errors.Is(err, errs.ErrVerificationNotFound) {
+		if errors.Is(err, ErrVerificationNotFound) {
 			logger.Warn().
 				Str("email", email).
 				Msg("no verification record found")
@@ -840,7 +842,7 @@ func (s *AuthService) ResendVerificationEmail(ctx context.Context, email string)
 
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			logger.Warn().
 				Str("email", email).
 				Msg("user not found for resend verification")
@@ -869,7 +871,7 @@ func (s *AuthService) ResendVerificationEmail(ctx context.Context, email string)
 		email,
 		verification.TypeEmailVerification,
 	)
-	if err != nil && !errors.Is(err, errs.ErrVerificationNotFound) {
+	if err != nil && !errors.Is(err, ErrVerificationNotFound) {
 		logger.Error().
 			Err(err).
 			Str("email", email).
@@ -907,7 +909,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, email string) error {
 
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			logger.Warn().
 				Str("email", email).
 				Msg("user not found for password reset")
@@ -936,7 +938,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, email string) error {
 		verification.TypePasswordReset,
 	)
 
-	if err != nil && !errors.Is(err, errs.ErrVerificationNotFound) {
+	if err != nil && !errors.Is(err, ErrVerificationNotFound) {
 		logger.Error().
 			Err(err).
 			Str("email", email).
@@ -1042,7 +1044,7 @@ func (s *AuthService) ResetPassword(
 		verification.TypePasswordReset,
 	)
 	if err != nil {
-		if errors.Is(err, errs.ErrVerificationNotFound) {
+		if errors.Is(err, ErrVerificationNotFound) {
 			logger.Warn().Msg("reset token not found")
 			return ErrInvalidResetToken
 		}
@@ -1061,7 +1063,7 @@ func (s *AuthService) ResetPassword(
 
 	user, err := s.userRepo.GetUserByEmail(ctx, record.Identifier)
 	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			logger.Warn().
 				Str("email", record.Identifier).
 				Msg("user not found for reset token")
@@ -1097,7 +1099,7 @@ func (s *AuthService) ResetPassword(
 
 	// Check whether the user already has a credential account.
 	_, err = s.accountRepo.GetCredentialAccount(ctx, user.ID)
-	if err != nil && !errors.Is(err, errs.ErrAccountNotFound) {
+	if err != nil && !errors.Is(err, ErrAccountNotFound) {
 		logger.Error().
 			Err(err).
 			Msg("failed to get credential account for password reset")
@@ -1105,7 +1107,7 @@ func (s *AuthService) ResetPassword(
 		return err
 	}
 
-	if errors.Is(err, errs.ErrAccountNotFound) {
+	if errors.Is(err, ErrAccountNotFound) {
 		// OAuth-only account.
 		// Create a credential account with the new password.
 		if _, err := s.accountRepo.CreateCredentialAccount(
@@ -1184,12 +1186,12 @@ func (s *AuthService) GetCurrentUser(
 
 	currentUser, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			logger.Warn().
 				Str("user_id", userID.String()).
 				Msg("current user not found")
 
-			return nil, errs.ErrUserNotFound
+			return nil, ErrUserNotFound
 		}
 
 		logger.Error().

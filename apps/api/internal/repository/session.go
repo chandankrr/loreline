@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
-	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/lib/utils/token"
 	"github.com/chandankrr/loreline/internal/model/session"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrSessionNotFound = errors.New("session not found")
 
 type SessionRepository struct {
 	server *server.Server
@@ -105,7 +106,7 @@ func (r *SessionRepository) GetSession(
 	sessionItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[session.Session])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrSessionNotFound
+			return nil, ErrSessionNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect session: %w", err)

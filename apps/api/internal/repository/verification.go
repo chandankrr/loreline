@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/chandankrr/loreline/internal/database"
-	"github.com/chandankrr/loreline/internal/errs"
 	"github.com/chandankrr/loreline/internal/model/verification"
 	"github.com/chandankrr/loreline/internal/server"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrVerificationNotFound = errors.New("verification record not found")
 
 type VerificationRepository struct {
 	server *server.Server
@@ -98,7 +99,7 @@ func (r *VerificationRepository) GetLatestByIdentifierAndType(
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrVerificationNotFound
+			return nil, ErrVerificationNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect verification: %w", err)
@@ -137,7 +138,7 @@ func (r *VerificationRepository) GetByValueAndType(
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.ErrVerificationNotFound
+			return nil, ErrVerificationNotFound
 		}
 
 		return nil, fmt.Errorf("failed to collect verification: %w", err)
@@ -214,7 +215,7 @@ func (r *VerificationRepository) IncrementAttempts(
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, errs.ErrVerificationNotFound
+			return 0, ErrVerificationNotFound
 		}
 
 		return 0, fmt.Errorf("failed to increment verification attempts: %w", err)
