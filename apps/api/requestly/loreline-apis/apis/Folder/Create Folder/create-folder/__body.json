@@ -1,0 +1,6 @@
+{
+  "$schema": "https://assets.requestly.com/local/v1.17.0/body.json",
+  "contentType": "raw",
+  "raw": "{\n  \"name\": \"Biology\",\n  \"parentId\": \"a968d6e0-d7b9-480f-8eb4-1170be4e65d7\"\n}",
+  "rawContentType": "application/json"
+}
